@@ -65,6 +65,20 @@ class MonteCarlo(AbstractSolver):
         ################################
         #   YOUR IMPLEMENTATION HERE   #
         ################################
+        for _ in range(self.options.steps):
+            probs = self.policy(state) # get the action probabilities
+            action = np.random.choice(np.arange(len(probs)), p=probs) # select action based on probs
+            next_state, reward, done, _ = self.step(action) # take action, observe next state and reward
+            episode.append((state, action, reward)) # store the transition
+            if done:
+                break
+            state = next_state # move to the next state
+        return_ = 0
+        for state, action, reward in reversed(episode):
+            return_ = discount_factor * return_ + reward # calculate the return
+            self.returns_sum[(state, action)] += return_ # update the sum of returns
+            self.returns_count[(state, action)] += 1 # update the count of returns
+            self.Q[state][action] = self.returns_sum[(state, action)] / self.returns_count[(state, action)] # update the Q-value
 
     def __str__(self):
         return "Monte Carlo"
@@ -90,6 +104,10 @@ class MonteCarlo(AbstractSolver):
             ################################
             #   YOUR IMPLEMENTATION HERE   #
             ################################
+            A = np.ones(nA, dtype=float) * self.options.epsilon / nA # initialize all actions with equal probability
+            best_action = np.argmax(self.Q[observation]) # get the best action for the current state
+            A[best_action] += (1.0 - self.options.epsilon) # assign the remaining probability to the best action
+            return A
 
         return policy_fn
 
@@ -109,7 +127,7 @@ class MonteCarlo(AbstractSolver):
             ################################
             #   YOUR IMPLEMENTATION HERE   #
             ################################
-
+            return np.argmax(self.Q[state]) # return the action with the highest Q value
 
         return policy_fn
 
@@ -163,7 +181,25 @@ class OffPolicyMC(MonteCarlo):
         ################################
         #   YOUR IMPLEMENTATION HERE   #
         ################################
-        
+        for _ in range(self.options.steps):
+            probs = self.behavior_policy(state)
+            action = np.random.choice(np.arange(len(probs)), p=probs)
+            next_state, reward, done, _ = self.step(action)
+            episode.append((state, action, reward))
+            if done:
+                break
+            state = next_state
+        return_ = 0
+        weights = 1.0
+        discount_factor = self.options.gamma
+        for state, action, reward in reversed(episode):
+            return_ = discount_factor * return_ + reward # calculate the return
+            self.C[state][action] += weights # update the cumulative denominator
+            self.Q[state][action] += (weights / self.C[state][action]) * (return_ - self.Q[state][action]) # update the Q-value
+            if action != self.target_policy(state): # important: if action taken is not the action from target policy, we stop updating
+                break
+            weights *= 1.0 / self.behavior_policy(state)[action] # update the weights
+
 
     def create_random_policy(self):
         """

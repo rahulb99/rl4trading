@@ -101,7 +101,12 @@ class DQN(AbstractSolver):
         ################################
         #   YOUR IMPLEMENTATION HERE   #
         ################################
-
+        q_values = self.model(torch.as_tensor(state, dtype=torch.float32)).unsqueeze(0) # get q values for the state
+        best_action = torch.argmax(q_values)
+        nA = self.env.action_space.n
+        probabilities = np.full(nA, self.options.epsilon / nA) # action probabilities
+        probabilities[best_action] += 1.0 - self.options.epsilon # add greedy probability
+        return probabilities
 
     def compute_target_values(self, next_states, rewards, dones):
         """
@@ -113,6 +118,9 @@ class DQN(AbstractSolver):
         ################################
         #   YOUR IMPLEMENTATION HERE   #
         ################################
+        # Compute target Q values using the target model = reward + gamma * max_a' Q_target(s', a') * (1 - done)
+        target_q = rewards + self.options.gamma * torch.max(self.target_model(next_states), dim=1)[0] * (1 - dones)
+        return target_q
 
 
     def replay(self):
@@ -188,7 +196,17 @@ class DQN(AbstractSolver):
             ################################
             #   YOUR IMPLEMENTATION HERE   #
             ################################
-
+            action_probabilities = self.epsilon_greedy(state) # get action probabilities using epsilon greedy
+            action = np.random.choice(np.arange(len(action_probabilities)), p=action_probabilities) # sample action based on probabilities
+            next_state, reward, done, _ = self.step(action) # take action
+            self.memorize(state, action, reward, next_state, done) # store transition
+            state = next_state # update state
+            self.replay()
+            self.n_steps += 1
+            if self.n_steps % self.options.update_target_estimator_every == 0:
+                self.update_target_model()
+            if done:
+                break
 
     def __str__(self):
         return "DQN"

@@ -71,6 +71,7 @@ class ValueIteration(AbstractSolver):
             ################################
             #   YOUR IMPLEMENTATION HERE   #
             ################################
+            self.V[each_state] = np.max(self.one_step_lookahead(each_state))
 
         # Dont worry about this part
         self.statistics[Statistics.Rewards.value] = np.sum(self.V)
@@ -140,7 +141,7 @@ class ValueIteration(AbstractSolver):
             ################################
             #   YOUR IMPLEMENTATION HERE   #
             ################################
-            
+            return np.argmax(self.one_step_lookahead(state))     
 
         return policy_fn
 
@@ -192,6 +193,13 @@ class AsynchVI(ValueIteration):
         # Do a one-step lookahead to find the best action       #
         # Update the value function. Ref: Sutton book eq. 4.10. #
         #########################################################
+        state = self.pq.pop()
+        best_action_value = np.max(self.one_step_lookahead(state))
+        self.V[state] = best_action_value
+        for p in self.pred[state]:
+            best_action_value = np.max(self.one_step_lookahead(p))
+            new_priority = -abs(self.V[p] - best_action_value)
+            self.pq.update(p, new_priority)
 
         # you can ignore this part
         self.statistics[Statistics.Rewards.value] = np.sum(self.V)
