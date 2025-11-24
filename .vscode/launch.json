@@ -144,7 +144,7 @@
             "name": "Python Debugger: Mag7Trading DDPG",
             "type": "debugpy",
             "request": "launch",
-            "program": "run.py",
+            "program": "run2.py",
             "console": "integratedTerminal",
             "args": ["-s", "ddpg", "-t", "248", "-d", "Mag7Trading", "-e", "1000", "-a", "0.001", "-g", "0.99", "-l", "[64,64]", "-b", "100"]
         },
