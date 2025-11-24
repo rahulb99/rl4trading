@@ -141,12 +141,20 @@
             "args": ["-s", "dqn", "-t", "1000", "-d", "LunarLander-v2", "-e", "500", "-a", "0.001", "-g", "0.99", "-p", "1.0", "-P", "0.05", "-c", "0.995", "-m", "10000", "-N", "100", "-b", "64", "-l", "[128,128]"]
         },
         {
-            "name": "Python Debugger: Mag7 DDPG",
+            "name": "Python Debugger: Mag7Trading DDPG",
             "type": "debugpy",
             "request": "launch",
             "program": "run.py",
             "console": "integratedTerminal",
-            "args": ["-s", "ddpg", "-t", "50", "-d", "Mag7Trading", "-e", "2"]
+            "args": ["-s", "ddpg", "-t", "248", "-d", "Mag7Trading", "-e", "1000", "-a", "0.001", "-g", "0.99", "-l", "[64,64]", "-b", "100"]
+        },
+        {
+            "name": "Python Debugger: LunarLanderContinuous DDPG",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "run.py",
+            "console": "integratedTerminal",
+            "args": ["-s", "ddpg", "-t", "1000", "-d", "LunarLanderContinuous-v2", "-e", "1000", "-a", "0.001", "-g", "0.99", "-l", "[64,64]", "-b", "100"]
         }
         
     ]
