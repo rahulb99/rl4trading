@@ -4,13 +4,9 @@ import numpy as np
 
 class MAG7TradingEnv(gym.Env):
     metadata = {"render_modes": ["human"]}
-    name = "Mag7Trading"
+    name = "MAG7TradingEnv"
 
-    def __init__(self, prices, indicators, max_k=100, initial_cash=1e6):
-        """
-        prices: (T, 7, 5) [O,H,L,C,V]
-        indicators: (T, 7, K)
-        """
+    def __init__(self, prices, indicators, max_k, initial_cash, random_start=True, min_steps = 50):
         super().__init__()
         self.prices = prices
         self.indicators = indicators
@@ -19,10 +15,9 @@ class MAG7TradingEnv(gym.Env):
 
         self.max_k = max_k
         self.initial_cash = initial_cash
-
-        # --- IMPROVEMENT: Normalization ---
-        # We will normalize prices relative to the price at t=0 of the episode
-        self.base_prices = None 
+        self.random_start = random_start 
+        self.base_prices = None
+        self.min_steps = min(max(min_steps, 1), self.T)
 
         obs_dim = 2 + self.n_assets + self.n_assets * (self.n_price_feats + self.n_ind_feats)
         
@@ -34,47 +29,35 @@ class MAG7TradingEnv(gym.Env):
             low=-float(max_k), high=float(max_k), shape=(self.n_assets,), dtype=np.float32
         )
 
-    def _decode_action(self, action_vec):
+    def decode_action(self, action_vec):
         return np.rint(action_vec).astype(int)
 
-    def reset(self, seed=None, options=None):
-        # We ignore the seed for self.t to ensure training variety
+    def reset(self, seed=None):
         super().reset(seed=seed)
         
-        # --- FIX: FORCE RANDOM START ---
-        # Calculate how much data we have vs how long the episode is
-        # We assume an episode is roughly 1000 steps (or use a safe buffer)
-        episode_len = 1000 
-        
-        if self.T > (episode_len + 50):
-            # Pick a random start point that leaves enough room for the episode
-            max_start = self.T - episode_len - 1
-            self.t = np.random.randint(0, max_start)
+        if self.random_start: #Randomly start at timestep t to prevent overfitting
+            # We can start anywhere from index 0 to (Total - min_steps)
+            self.t = np.random.randint(0, self.T - self.min_steps)
         else:
+            # Test Mode: Always start at Day 0 of this dataset
             self.t = 0
+        # self.t = 0
             
         self.cash = self.initial_cash
         self.positions = np.zeros(self.n_assets, dtype=np.int32)
         
-        # Capture base prices for normalization
         self.base_prices = self.prices[self.t, :, 3] 
         self.base_prices = np.where(self.base_prices == 0, 1.0, self.base_prices)
 
-        self._update_portfolio_value()
-        
-        # Track the "Market" (Buy & Hold) value for Reward Calculation
-        # We simulate holding 1 unit of the index or equal weight basket
-        self.market_base_price = np.mean(self.prices[self.t, :, 3])
-
-        return self._get_obs(), {}
+        self.update_portfolio_value()
+        return self.get_obs(), {}
 
     def step(self, action):
         action = np.clip(action, self.action_space.low, self.action_space.high)
-        a = self._decode_action(action)
+        a = self.decode_action(action)
 
-        prices_t = self.prices[self.t, :, 3] # Close prices
+        prices_t = self.prices[self.t, :, 3] # Get Low price for all stock at time t
 
-        # Execute Trades
         for i in range(self.n_assets):
             desired = int(a[i])
             if desired == 0: continue
@@ -91,64 +74,49 @@ class MAG7TradingEnv(gym.Env):
                 self.cash -= size * price
                 self.positions[i] += size
 
-        # Update Value
-        old_portfolio_value = self.portfolio_value
-        self._update_portfolio_value()
+        old_val = self.portfolio_value
+        self.update_portfolio_value()
         
-        # --- CALCULATE RETURNS ---
-        # 1. Agent Return
-        if old_portfolio_value > 0:
-            agent_return = (self.portfolio_value - old_portfolio_value) / old_portfolio_value
-        else:
-            agent_return = 0.0
+        # Returns for Reward
+        agent_ret = 0.0
+        if old_val > 0:
+            agent_ret = (self.portfolio_value - old_val) / old_val
 
-        # 2. Market Return (Average of the 7 assets for this step)
-        # We look at the change in average price from t to t+1
-        avg_price_t = np.mean(self.prices[self.t, :, 3])
-        avg_price_next = np.mean(self.prices[self.t + 1, :, 3]) if self.t + 1 < self.T else avg_price_t
-        
-        market_return = (avg_price_next - avg_price_t) / avg_price_t
+        # Market Return (Average of assets)
+        avg_t = np.mean(self.prices[self.t, :, 3])
+        avg_next = np.mean(self.prices[self.t+1, :, 3]) if self.t+1 < self.T else avg_t
+        mkt_ret = (avg_next - avg_t) / avg_t
 
-        # --- NEW REWARD FUNCTION: ALPHA ---
-        # Reward is positive ONLY if we beat the market.
-        # We scale it by 100 to make it significant for the neural net.
-        reward = (agent_return - market_return) * 100.0
-        
-        # Optional: Small penalty for doing nothing to encourage activity?
-        # No, DDPG will find the path. But we clip extreme rewards.
+        # Differential Reward (Alpha)
+        reward = (agent_ret - mkt_ret) * 100.0
         reward = np.clip(reward, -10.0, 10.0)
 
-        # Advance Time
         self.t += 1
         terminated = self.t >= self.T - 1
         truncated = False
 
-        return self._get_obs(), reward, terminated, truncated, {
+        return self.get_obs(), reward, terminated, truncated, {
             "portfolio_value": float(self.portfolio_value)
         }
 
-    def _update_portfolio_value(self):
+    def update_portfolio_value(self):
         prices_t = self.prices[self.t, :, 3]
         self.portfolio_value = self.cash + float(np.dot(self.positions, prices_t))
 
-    def _get_obs(self):
-        prices_t = self.prices[self.t]      # (7, 5)
-        inds_t = self.indicators[self.t]    # (7, K)
+    def get_obs(self):
+        prices_t = self.prices[self.t]
+        inds_t = self.indicators[self.t]
 
         cash_norm = self.cash / self.initial_cash
         value_norm = self.portfolio_value / self.initial_cash
         pos_norm = self.positions / self.max_k
-
-        # --- IMPROVEMENT: Normalize Prices ---
-        # Divide current prices by the base prices (Start of episode)
-        # This makes price inputs ~1.0 instead of ~200.0
-        # Broadcast base_prices (7,) to (7, 5)
+        
         prices_norm = prices_t / self.base_prices[:, None]
 
         obs = np.concatenate([
             np.array([cash_norm, value_norm], dtype=np.float32),
             pos_norm.astype(np.float32),
-            prices_norm.reshape(-1).astype(np.float32), # Normalized prices
+            prices_norm.reshape(-1).astype(np.float32),
             inds_t.reshape(-1).astype(np.float32),
         ])
         return obs

@@ -12,7 +12,6 @@ import sys
 import os
 import random
 import numpy as np
-import pandas as pd # Added for data loading
 import torch
 
 gym.logger.set_level(40)
@@ -27,7 +26,6 @@ from lib.envs.gridworld import GridworldEnv
 from lib.envs.blackjack import BlackjackEnv
 from lib.envs.cliff_walking import CliffWalkingEnv
 from lib.envs.windy_gridworld import WindyGridworldEnv
-from lib.envs.mag7_trading import MAG7TradingEnv
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -192,16 +190,6 @@ def getEnv(domain, render_mode=""):
         return CliffWalkingEnv()
     elif domain == "WindyGridworld":
         return WindyGridworldEnv()
-    elif domain == "Mag7Trading":
-        # Load data dynamically when this domain is requested
-        try:
-            # Assumes 'data' folder is in the same directory where run.py is executed
-            prices, indicators = load_data(data_dir="data")
-            return MAG7TradingEnv(prices, indicators)
-        except Exception as e:
-            print(f"Error initializing MAG7TradingEnv: {e}")
-            print("Ensure the 'data' directory exists and contains the CSV files.")
-            sys.exit(1)
     else:
         try:
             return gym.make(domain, render_mode=render_mode)
@@ -233,92 +221,6 @@ def on_press(key):
         print(f"Key pressed: {k}")
         global render
         render = True
-
-
-# ==========================================
-# DATA LOADING UTILITIES (Added)
-# ==========================================
-def compute_indicators(df):
-    """
-    Computes technical indicators for a single asset dataframe.
-    """
-    close = df['Close']
-    
-    # 1. RSI
-    delta = close.diff()
-    gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
-    loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
-    rs = gain / loss
-    rsi = 100 - (100 / (1 + rs))
-    
-    # 2. MACD
-    exp1 = close.ewm(span=12, adjust=False).mean()
-    exp2 = close.ewm(span=26, adjust=False).mean()
-    macd = exp1 - exp2
-    signal = macd.ewm(span=9, adjust=False).mean()
-    
-    # 3. SMA Ratio
-    sma20 = close.rolling(window=20).mean()
-    sma_ratio = close / sma20
-
-    indicators = pd.DataFrame({
-        'RSI': rsi / 100.0,
-        'MACD': macd,
-        'Signal': signal,
-        'SMA_Ratio': sma_ratio
-    })
-    return indicators.fillna(0)
-
-def load_data(data_dir="data"):
-    """
-    Loads MAG7 data from CSVs in the specified directory.
-    """
-    tickers = ['AAPL', 'AMZN', 'GOOGL', 'META', 'MSFT', 'NVDA', 'TSLA']
-    price_feats = ['Open', 'High', 'Low', 'Close', 'Volume']
-    
-    all_prices = []
-    all_inds = []
-    common_index = None
-
-    print(f"Loading data from {os.path.abspath(data_dir)}...")
-
-    dfs = {}
-    for t in tickers:
-        path = os.path.join(data_dir, f"{t}.csv")
-        if not os.path.exists(path):
-            raise FileNotFoundError(f"Could not find {path}")
-        
-        # Read CSV (Header row 0, Date index)
-        df = pd.read_csv(path, parse_dates=['Date'], index_col='Date')
-        
-        # Coerce to numeric to handle potential sub-headers
-        for col in price_feats:
-            df[col] = pd.to_numeric(df[col], errors='coerce')
-        
-        df = df.dropna()
-        dfs[t] = df
-        
-        if common_index is None:
-            common_index = df.index
-        else:
-            common_index = common_index.intersection(df.index)
-
-    common_index = common_index.sort_values()
-    print(f"Found {len(common_index)} common trading days.")
-
-    for t in tickers:
-        df = dfs[t].reindex(common_index).fillna(method='ffill')
-        prices_df = df[price_feats]
-        inds_df = compute_indicators(df)
-        
-        all_prices.append(prices_df.values)
-        all_inds.append(inds_df.values)
-
-    # Shape: (Time, Assets, Feats)
-    prices_array = np.stack(all_prices, axis=0).transpose(1, 0, 2)
-    inds_array = np.stack(all_inds, axis=0).transpose(1, 0, 2)
-    
-    return prices_array.astype(np.float32), inds_array.astype(np.float32)
 
 
 def main(options):

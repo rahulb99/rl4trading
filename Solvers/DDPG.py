@@ -87,7 +87,10 @@ class DDPG(AbstractSolver):
 
         # Replay buffer
         self.replay_memory = deque(maxlen=options.replay_memory_size)
-
+        
+        # Action noise
+        self.noise_scale = options.noise_scale
+        
     @torch.no_grad()
     def update_target_networks(self, tau=0.995):
         """
@@ -117,24 +120,21 @@ class DDPG(AbstractSolver):
 
     @torch.no_grad()
     def select_action(self, state):
+        """
+        Selects an action given state.
+
+         Returns:
+            The selected action (as an int)
+        """
         state = torch.as_tensor(state, dtype=torch.float32)
         mu = self.actor_critic.pi(state)
-        
-        # --- FIX: Increase Noise Scale ---
-        action_limit = self.env.action_space.high[0]
-        
-        # Use 30% of the max limit as noise (e.g., +/- 30 shares)
-        # This forces the agent to explore different integer values.
-        noise_scale = 0.30 * action_limit 
-
         m = Normal(
             torch.zeros(self.env.action_space.shape[0]),
-            torch.ones(self.env.action_space.shape[0]) * noise_scale,
+            torch.ones(self.env.action_space.shape[0]),
         )
-        
-        action = mu + m.sample()
-        
-        return torch.clamp(
+        action_limit = self.env.action_space.high[0]
+        action = mu + self.noise_scale * m.sample()
+        return torch.clip(
             action,
             -action_limit,
             action_limit,
