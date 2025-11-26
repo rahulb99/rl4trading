@@ -120,7 +120,8 @@ def getEnv(options, split='train', split_rate=0.8):
                           max_k=options.max_k,
                           initial_cash=options.initial_cash,
                           random_start=random_start,
-                          min_steps=options.steps)
+                          min_steps=options.steps,
+                          continous=options.continous)
 
 # ==========================================
 # 2. RUNNER & BACKTEST LOGIC
@@ -153,7 +154,12 @@ def run_backtest(env, solver):
     
     while not done:
         # Greedy action (no noise)
-        action = solver.select_action(state) # Ensure DDPG uses noise=False
+        action = solver.select_action(state, training = False) 
+        
+        
+        # if hasattr(action, 'detach'): #detach tensor to np if needed
+        #         action = action.detach().cpu().numpy()
+                
         state, reward, term, trunc, info = env.step(action)
         done = term or trunc
         
@@ -239,6 +245,7 @@ def build_parser():
     
     parser.add_option("--no-plots", action="store_true", dest="disable_plots", default=False)
     parser.add_option("--rand-start", action="store_true", dest="random_start", default=False)
+    parser.add_option("--cont", action="store_true", dest="continous", default=False)
     return parser
 
 def parse_list(s):

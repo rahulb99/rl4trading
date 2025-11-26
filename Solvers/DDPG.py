@@ -66,10 +66,10 @@ class DDPG(AbstractSolver):
         super().__init__(env, eval_env, options)
         # Create actor-critic network
         self.actor_critic = ActorCriticNetwork(
-            env.observation_space.shape[0],
-            env.action_space.shape[0],
-            env.action_space.high[0],
-            self.options.layers,
+            env.observation_space.shape[0], # obs_dim
+            env.action_space.shape[0], # act_dim
+            env.action_space.high[0], # act_lim
+            self.options.layers, # hidden_sizes
         )
         # Create target actor-critic network
         self.target_actor_critic = deepcopy(self.actor_critic)
@@ -119,7 +119,7 @@ class DDPG(AbstractSolver):
         return policy_fn
 
     @torch.no_grad()
-    def select_action(self, state):
+    def select_action(self, state, training=True):
         """
         Selects an action given state.
 
@@ -133,7 +133,7 @@ class DDPG(AbstractSolver):
             torch.ones(self.env.action_space.shape[0]),
         )
         action_limit = self.env.action_space.high[0]
-        action = mu + self.noise_scale * m.sample()
+        action = mu + training * self.noise_scale * m.sample()
         return torch.clip(
             action,
             -action_limit,

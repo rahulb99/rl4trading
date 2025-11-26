@@ -6,7 +6,7 @@ class MAG7TradingEnv(gym.Env):
     metadata = {"render_modes": ["human"]}
     name = "MAG7TradingEnv"
 
-    def __init__(self, prices, indicators, max_k, initial_cash, random_start=True, min_steps = 50):
+    def __init__(self, prices, indicators, max_k, initial_cash, random_start=True, min_steps = 50, continous=True):
         super().__init__()
         self.prices = prices
         self.indicators = indicators
@@ -18,19 +18,39 @@ class MAG7TradingEnv(gym.Env):
         self.random_start = random_start 
         self.base_prices = None
         self.min_steps = min(max(min_steps, 1), self.T)
+        self.continuous = continous
 
         obs_dim = 2 + self.n_assets + self.n_assets * (self.n_price_feats + self.n_ind_feats)
         
+        # self.observation_space = spaces.Box(
+        #     low=-np.inf, high=np.inf, shape=(obs_dim,), dtype=np.float32
+        # )
+        low = np.full(obs_dim, -np.inf, dtype=np.float32)
+        high = np.full(obs_dim, np.inf, dtype=np.float32)
+        
+        # Set bounds for normalized positions
+        pos_start = 2
+        pos_end = pos_start + self.n_assets
+        low[pos_start:pos_end] = -1.0
+        high[pos_start:pos_end] = 1.0
+
         self.observation_space = spaces.Box(
-            low=-np.inf, high=np.inf, shape=(obs_dim,), dtype=np.float32
+            low=low, high=high, dtype=np.float32
         )
+        
+        if self.continuous:
+            # DDPG Mode: Continuous output [-k, k]
+            # We use float32 to be compatible with DDPG/TD3
+            self.action_space = spaces.Box(
+                low=-float(max_k), high=float(max_k), shape=(self.n_assets,), dtype=np.float32
+            )
+        else:
+            # DQN Mode: MultiDiscrete output [0, 2k]
+            # Each asset has 2*k + 1 possible actions
+            self.action_space = spaces.MultiDiscrete([2 * max_k + 1] * self.n_assets)
 
-        self.action_space = spaces.Box(
-            low=-float(max_k), high=float(max_k), shape=(self.n_assets,), dtype=np.float32
-        )
-
-    def decode_action(self, action_vec):
-        return np.rint(action_vec).astype(int)
+    # def decode_action(self, action_vec):
+    #     return np.rint(action_vec).astype(int) - self.max_k
 
     def reset(self, seed=None):
         super().reset(seed=seed)
@@ -53,8 +73,27 @@ class MAG7TradingEnv(gym.Env):
         return self.get_obs(), {}
 
     def step(self, action):
-        action = np.clip(action, self.action_space.low, self.action_space.high)
-        a = self.decode_action(action)
+        # FIX: Explicitly handle PyTorch Tensors.
+        # If action is a Tensor (requires_grad=True or False), detach and convert to numpy.
+        if hasattr(action, 'detach'):
+            action = action.detach().cpu().numpy()
+        
+        # Handle scalar tensors (0-d arrays)
+        if np.isscalar(action) and hasattr(action, 'item'):
+             action = action.item()
+
+        
+        if self.continuous:
+            # DDPG: Action is float in [-k, k].
+            # 1. Clip to ensure bounds (DDPG noise might push it outside)
+            # 2. Round to nearest integer to get discrete stock units
+            clipped_action = np.clip(action, self.action_space.low, self.action_space.high)
+            a = np.rint(clipped_action).astype(int)
+        else:
+            # DQN: Action is integer index in [0, 2k]
+            # Convert to [-k, k] by shifting
+            a = np.array(action, dtype=np.int32) - self.max_k
+        
 
         prices_t = self.prices[self.t, :, 3] # Get Low price for all stock at time t
 
