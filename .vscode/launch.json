@@ -146,23 +146,39 @@
             "request": "launch",
             "program": "run_mag7.py",
             "console": "integratedTerminal",
-            "args": ["-o", "mag7_ddpg", "-s", "ddpg", "-t", "50", "-e", "1000", "-a", "0.001", "-g", "0.99", "-l", "[64,64]", "-b", "100", "-n", "10", "-i", "1000000", "-k", "100", "--rand-start", "--cont"]
+            "args": ["-o", "mag7_ddpg", "-s", "ddpg", "-t", "50", "-e", "1000", "-a", "0.001", "-g", "0.99", "-l", "[64,64]", "-b", "100", "-n", "10", "-i", "1000000", "-k", "1000", "--rand-start", "--cont"]
         },
         {
-            "name": "Python Debugger: Mag7 A2C",
+            "name": "Python Debugger: Mag7 MultiDiscrete DQN",
             "type": "debugpy",
             "request": "launch",
             "program": "run_mag7.py",
             "console": "integratedTerminal",
-            "args": ["-o", "mag7_a2c", "-s", "ma2c", "-t", "50", "-e", "5000", "-a", "0.0001", "-g", "0.90", "-l", "[64,64]", "-b", "100", "-n", "10", "-i", "1000000", "-k", "100", "--rand-start", "--cont"]
+            "args": ["-o", "mag7_dqn", "-s", "mdqn", "-t", "50", "-e", "1000", "-a", "0.001", "-g", "0.99", "-p", "1.0", "-P", "0.05", "-c", "0.995", "-m", "10000", "-N", "100", "-b", "64", "-l", "[128,128]", "-n", "10", "-i", "1000000", "-k", "1000", "--rand-start"]
         },
         {
-            "name": "Python Debugger: Mag7 MDQN",
+            "name": "Python Debugger: Mag7 Continuous A2C",
             "type": "debugpy",
             "request": "launch",
             "program": "run_mag7.py",
             "console": "integratedTerminal",
-            "args": ["-o", "mag7_dqn", "-s", "mdqn", "-t", "50", "-e", "1000", "-a", "0.001", "-g", "0.99", "-p", "1.0", "-P", "0.05", "-c", "0.995", "-m", "10000", "-N", "100", "-b", "64", "-l", "[128,128]", "-n", "10", "-i", "1000000", "-k", "100", "--rand-start"]
+            "args": ["-o", "mag7_ca2c", "-s", "mca2c", "-t", "50", "-e", "5000", "-a", "0.0005", "-g", "0.90", "-l", "[64,64]", "-b", "100", "-n", "10", "-i", "1000000", "-k", "100", "-y", "0.1", "--rand-start", "--cont"]
+        },
+        {
+            "name": "Python Debugger: Mag7 MultiDiscrete A2C",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "run_mag7.py",
+            "console": "integratedTerminal",
+            "args": ["-o", "mag7_mda2c", "-s", "mda2c", "-t", "50", "-e", "5000", "-a", "0.0005", "-g", "0.90", "-l", "[64,64]", "-b", "100", "-n", "10", "-i", "1000000", "-k", "100", "-y", "0.01", "--rand-start"]
+        },
+        {
+            "name": "Python Debugger: Mag7 MultiDiscrete REINFORCE",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "run_mag7.py",
+            "console": "integratedTerminal",
+            "args": ["-o", "mag7_mdreinforce", "-s", "mdreinforce", "-t", "100", "-e", "10000", "-a", "0.0005", "-g", "0.99", "-l", "[128,128]", "-i", "1000000", "-k", "100", "-y", "0.01", "--rand-start"]
         }
     ]
 }

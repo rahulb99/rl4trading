@@ -58,7 +58,7 @@ class ActorCriticNetwork(nn.Module):
 
         return mu, sigma, torch.squeeze(value, -1)
 
-class MultiA2C(AbstractSolver):
+class MultiContinuousA2C(AbstractSolver):
     """
     To support continuous actions, the A2C algorithm must be adapted to use a Gaussian Policy 
     (predicting Mean and Standard Deviation) instead of a Categorical Policy (predicting discrete probabilities).
@@ -81,6 +81,7 @@ class MultiA2C(AbstractSolver):
         self.policy = self.create_greedy_policy()
 
         self.optimizer = Adam(self.actor_critic.parameters(), lr=self.options.alpha)
+        self.entropy_pct = options.entropy_pct
 
     def create_greedy_policy(self):
         """
@@ -141,7 +142,7 @@ class MultiA2C(AbstractSolver):
 
         loss = actor_loss + critic_loss
 
-        entropy_loss = -0.1 * entropy.mean()
+        entropy_loss = -self.entropy_pct * entropy.mean()
 
         loss = actor_loss + critic_loss + entropy_loss
         
@@ -211,7 +212,7 @@ class MultiA2C(AbstractSolver):
         return -advantage * value
 
     def __str__(self):
-        return "MultiA2C_Continuous"
+        return "Continuous A2C"
 
     def plot(self, stats, smoothing_window=20, final=False):
         plotting.plot_episode_stats(stats, smoothing_window, final=final)

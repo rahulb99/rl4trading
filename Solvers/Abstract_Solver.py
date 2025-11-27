@@ -14,7 +14,6 @@ import time
 
 class AbstractSolver(ABC):
     def __init__(self, env, eval_env, options):
-        self.name = str(options.solver).upper()
         self.statistics = [0] * len(Statistics)
         self.env = env
         self.eval_env = eval_env

@@ -97,42 +97,94 @@ class MAG7TradingEnv(gym.Env):
 
         prices_t = self.prices[self.t, :, 3] # Get Low price for all stock at time t
 
+        # for i in range(self.n_assets):
+        #     desired = int(a[i])
+        #     if desired == 0: continue
+
+        #     price = prices_t[i]
+        #     if desired > 0: # Buy
+        #         max_buy = int(self.cash // price)
+        #         size = min(desired, max_buy)
+        #     else: # Sell
+        #         max_sell = self.positions[i]
+        #         size = -min(-desired, max_sell)
+
+        #     if size != 0:
+        #         self.cash -= size * price
+        #         self.positions[i] += size
+        
+        # PASS 1: EXECUTE ALL SELLS
         for i in range(self.n_assets):
             desired = int(a[i])
-            if desired == 0: continue
+            if desired < 0: # SELL
+                price = prices_t[i]
+                max_sell = self.positions[i]
+                size = min(-desired, max_sell) 
+                
+                if size != 0:
+                    self.cash += size * price
+                    self.positions[i] -= size
 
-            price = prices_t[i]
-            if desired > 0: # Buy
+        # PASS 2: EXECUTE ALL BUYS
+        for i in range(self.n_assets):
+            desired = int(a[i])
+            if desired > 0: # BUY
+                price = prices_t[i]
                 max_buy = int(self.cash // price)
                 size = min(desired, max_buy)
-            else: # Sell
-                max_sell = self.positions[i]
-                size = -min(-desired, max_sell)
+                
+                # if size == 0 and desired > 0:
+                #    print(f"DEBUG: Wanted to buy {desired} of Asset {i} at ${price:.2f}, but max_buy is {max_buy}. Cash: ${self.cash:.2f}")
+                
+                if size != 0:
+                    self.cash -= size * price
+                    self.positions[i] += size
+        # -------------------------------------------
 
-            if size != 0:
-                self.cash -= size * price
-                self.positions[i] += size
-
-        old_val = self.portfolio_value
-        self.update_portfolio_value()
+        # old_val = self.portfolio_value
+        # self.update_portfolio_value()
         
-        # Returns for Reward
-        agent_ret = 0.0
-        if old_val > 0:
-            agent_ret = (self.portfolio_value - old_val) / old_val
+        # # Returns for Reward
+        # agent_ret = 0.0
+        # if old_val > 0:
+        #     agent_ret = (self.portfolio_value - old_val) / old_val
 
-        # Market Return (Average of assets)
-        avg_t = np.mean(self.prices[self.t, :, 3])
-        avg_next = np.mean(self.prices[self.t+1, :, 3]) if self.t+1 < self.T else avg_t
-        mkt_ret = (avg_next - avg_t) / avg_t
+        # # Market Return (Average of assets)
+        # avg_t = np.mean(self.prices[self.t, :, 3])
+        # avg_next = np.mean(self.prices[self.t+1, :, 3]) if self.t+1 < self.T else avg_t
+        # mkt_ret = (avg_next - avg_t) / avg_t
 
-        # Differential Reward (Alpha)
-        reward = (agent_ret - mkt_ret) * 100.0
-        reward = np.clip(reward, -10.0, 10.0)
-
+        # # Differential Reward (Alpha)
+        # reward = (agent_ret - mkt_ret) * 100.0
+        # reward = np.clip(reward, -10.0, 10.0)
+        
+        
+        # --- MODIFIED REWARD SECTION ---
+        # Reward is simply the change in portfolio value (Current Value - Previous Value)
+        # If value went up, positive reward. If down, negative reward.
+        # reward = self.portfolio_value - old_val
+        # -------------------------------
+        
+        old_val = self.portfolio_value
+        
+        # 2. Increment Time Step (Move to T+1)
         self.t += 1
+        
+        # 3. Check Termination
         terminated = self.t >= self.T - 1
         truncated = False
+        
+        # 4. Update Portfolio Value using NEW prices (Prices at T+1)
+        if not terminated:
+            self.update_portfolio_value()
+            
+        # 5. Calculate Reward (Change in value due to market movement)
+        reward = self.portfolio_value - old_val
+
+        # self.t += 1
+        # terminated = self.t >= self.T - 1
+        # truncated = False
+        # print("Reward: {}".format(reward))
 
         return self.get_obs(), reward, terminated, truncated, {
             "portfolio_value": float(self.portfolio_value)

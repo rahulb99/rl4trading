@@ -97,7 +97,7 @@ def getEnv(options, split='train', split_rate=0.8):
     global CACHED_PRICES, CACHED_INDS
     
     if CACHED_PRICES is None:
-        CACHED_PRICES, CACHED_INDS = load_data_raw()
+        CACHED_PRICES, CACHED_INDS = load_data_raw(options.data_dir)
         
     T = len(CACHED_PRICES)
     split_idx = int(T * split_rate) # 80/20 Split
@@ -197,7 +197,7 @@ def run_backtest(env, solver):
     plt.figure(figsize=(10, 5))
     plt.plot(agent_vals, label="Agent Portfolio", color='blue')
     plt.plot(market_vals, label="Buy & Hold Portfolio", color='orange', linestyle='--')
-    plt.title("Mag7 Trading test on {} for {} days".format(solver.name, len(agent_vals)+1))
+    plt.title("Mag7 Trading test on {} for {} days".format(str(solver), len(agent_vals)+1))
     plt.xlabel("Time Steps (Days)")
     plt.ylabel("Portfolio Value ($)")
     plt.legend()
@@ -236,6 +236,8 @@ def build_parser():
     parser.add_option("-n", "--noise_scale", type="float", dest="noise_scale", default=10)
     parser.add_option("-i", "--initial_cash", type="int", dest="initial_cash", default=1e6)
     parser.add_option("-k", "--max_k", type="int", dest="max_k", default=100)
+    parser.add_option("-y", "--entropy_pct", type="float", dest="entropy_pct", default=0.01)
+    parser.add_option("-d", "--data-dir", dest="data_dir", default="data")
     
     # --- FIX: Added explicit 'dest' arguments here ---
     parser.add_option("-m", "--replay", type="int", dest="replay_memory_size", default=100000)
