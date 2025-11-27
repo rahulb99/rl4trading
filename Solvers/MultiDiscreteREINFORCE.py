@@ -168,7 +168,7 @@ class MultiDiscreteREINFORCE(AbstractSolver):
 
         # Compute advantage (delta)
         # Normalize returns for stability (Optional but recommended for REINFORCE)
-        returns = (returns - returns.mean()) / (returns.std() + 1e-9)
+        # returns = (returns - returns.mean()) / (returns.std() + 1e-9)
         
         deltas = returns - baselines
 
