@@ -98,7 +98,7 @@ class MAG7TradingEnv(gym.Env):
             clipped_action = np.clip(action, self.action_space.low, self.action_space.high)
             a = np.rint(clipped_action).astype(int)
         elif self.action_space_mode == action_space_modes[1]:
-            # DQN: Action is integer index in [0, 2k]
+            # REINFORCE & A2C: Action is integer index in [0, 2k]
             # Convert to [-k, k] by shifting
             a = np.array(action, dtype=np.int32) - self.max_k
         elif self.action_space_mode == action_space_modes[2]:
