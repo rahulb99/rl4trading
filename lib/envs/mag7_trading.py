@@ -56,7 +56,7 @@ class MAG7TradingEnv(gym.Env):
             self.discrete_tuple = tuple([2 * max_k + 1] * self.n_assets) # Used for decoding discrete actions
             self.action_space = spaces.Discrete(max_k ** self.n_assets)
         else:
-            raise ValueError("Invalid action space type")
+            raise ValueError("Invalid action space mode")
 
     # def decode_action(self, action_vec):
     #     return np.rint(action_vec).astype(int) - self.max_k
@@ -90,17 +90,6 @@ class MAG7TradingEnv(gym.Env):
         # Handle scalar tensors (0-d arrays)
         if np.isscalar(action) and hasattr(action, 'item'):
              action = action.item()
-
-        # if self.continuous:
-        #     # DDPG: Action is float in [-k, k].
-        #     # 1. Clip to ensure bounds (DDPG noise might push it outside)
-        #     # 2. Round to nearest integer to get discrete stock units
-        #     clipped_action = np.clip(action, self.action_space.low, self.action_space.high)
-        #     a = np.rint(clipped_action).astype(int)
-        # else:
-            # DQN: Action is integer index in [0, 2k]
-            # Convert to [-k, k] by shifting
-        #     a = np.array(action, dtype=np.int32) - self.max_k
         
         if self.action_space_mode == action_space_modes[0]:
             # DDPG: Action is float in [-k, k].
@@ -119,7 +108,7 @@ class MAG7TradingEnv(gym.Env):
             unraveled_indices = np.unravel_index(int(action), self.discrete_tuple)
             a = np.array(unraveled_indices, dtype=np.int32) - self.max_k
         else:
-            raise ValueError("Invalid action space type")
+            raise ValueError("Invalid action space mode")
 
         prices_t = self.prices[self.t, :, 3] # Get Low price for all stock at time t
         
@@ -149,32 +138,7 @@ class MAG7TradingEnv(gym.Env):
                 if size != 0:
                     self.cash -= size * price
                     self.positions[i] += size
-        # -------------------------------------------
 
-        # old_val = self.portfolio_value
-        # self.update_portfolio_value()
-        
-        # # Returns for Reward
-        # agent_ret = 0.0
-        # if old_val > 0:
-        #     agent_ret = (self.portfolio_value - old_val) / old_val
-
-        # # Market Return (Average of assets)
-        # avg_t = np.mean(self.prices[self.t, :, 3])
-        # avg_next = np.mean(self.prices[self.t+1, :, 3]) if self.t+1 < self.T else avg_t
-        # mkt_ret = (avg_next - avg_t) / avg_t
-
-        # # Differential Reward (Alpha)
-        # reward = (agent_ret - mkt_ret) * 100.0
-        # reward = np.clip(reward, -10.0, 10.0)
-        
-        
-        # --- MODIFIED REWARD SECTION ---
-        # Reward is simply the change in portfolio value (Current Value - Previous Value)
-        # If value went up, positive reward. If down, negative reward.
-        # reward = self.portfolio_value - old_val
-        # -------------------------------
-        
         old_val = self.portfolio_value
         
         # 2. Increment Time Step (Move to T+1)

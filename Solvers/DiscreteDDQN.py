@@ -45,7 +45,7 @@ class QFunction(nn.Module):
         return self.layers[-1](x).squeeze(dim=-1)
 
 
-class DiscreteDQN(AbstractSolver):
+class DiscreteDDQN(AbstractSolver):
     def __init__(self, env, eval_env, options):
         assert str(env.action_space).startswith("Discrete") or str(
             env.action_space
@@ -81,32 +81,6 @@ class DiscreteDQN(AbstractSolver):
     def update_target_model(self):
         # Copy weights from model to target_model
         self.target_model.load_state_dict(self.model.state_dict())
-
-    # def epsilon_greedy(self, state):
-    #     """
-    #     Apply an epsilon-greedy policy based on the given Q-function approximator and epsilon.
-
-    #     Returns:
-    #         The probabilities (as a Numpy array) associated with each action for 'state'.
-
-    #     Use:
-    #         self.env.action_space.n: Number of avilable actions
-    #         self.torch.as_tensor(state): Convert Numpy array ('state') to a tensor
-    #         self.model(state): Returns the predicted Q values at a 
-    #             'state' as a tensor. One value per action.
-    #         torch.argmax(values): Returns the index corresponding to the highest value in
-    #             'values' (a tensor)
-    #     """
-    #     # Don't forget to convert the states to torch tensors to pass them through the network.
-    #     ################################
-    #     #   YOUR IMPLEMENTATION HERE   #
-    #     ################################
-    #     q_values = self.model(torch.as_tensor(state, dtype=torch.float32)).unsqueeze(0) # get q values for the state
-    #     best_action = torch.argmax(q_values)
-    #     nA = self.env.action_space.n
-    #     probabilities = np.full(nA, self.options.epsilon / nA) # action probabilities
-    #     probabilities[best_action] += 1.0 - self.options.epsilon # add greedy probability
-    #     return probabilities
 
     def compute_target_values(self, next_states, rewards, dones):
         """

@@ -25,6 +25,7 @@ solvers = [
     "mda2c",
     "mdreinforce",
     "didqn",
+    "diddqn",
 ]
 
 
@@ -101,6 +102,10 @@ def get_solver_class(name):
         from Solvers.DiscreteDQN import DiscreteDQN
 
         return DiscreteDQN
+    elif name == solvers[18]:
+        from Solvers.DiscreteDDQN import DiscreteDDQN
+
+        return DiscreteDDQN
     else:
         assert False, "unknown solver name {}. solver must be from {}".format(
             name, str(solvers)
