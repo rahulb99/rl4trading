@@ -121,7 +121,7 @@ def getEnv(options, split='train', split_rate=0.8):
                           initial_cash=options.initial_cash,
                           random_start=random_start,
                           min_steps=options.steps,
-                          continous=options.continous)
+                          action_space_mode=options.action_space_mode)
 
 # ==========================================
 # 2. RUNNER & BACKTEST LOGIC
@@ -237,13 +237,15 @@ def build_parser():
     parser.add_option("-i", "--initial_cash", type="int", dest="initial_cash", default=1e6)
     parser.add_option("-k", "--max_k", type="int", dest="max_k", default=100)
     parser.add_option("-y", "--entropy_pct", type="float", dest="entropy_pct", default=0.01)
-    parser.add_option("-d", "--data-dir", dest="data_dir", default="data")
+    parser.add_option("-d", "--data_dir", dest="data_dir", default="data")
+    parser.add_option("-A", "--action_space_mode", dest="action_space_mode", default="multidiscrete")
     
     # --- FIX: Added explicit 'dest' arguments here ---
     parser.add_option("-m", "--replay", type="int", dest="replay_memory_size", default=100000)
     parser.add_option("-N", "--update", type="int", dest="update_target_estimator_every", default=1000)
     parser.add_option("-b", "--batch_size", type="int", dest="batch_size", default=64)
     parser.add_option("-x", "--experiment_dir", dest="experiment_dir", default="Experiments")
+    
     
     parser.add_option("--no-plots", action="store_true", dest="disable_plots", default=False)
     parser.add_option("--rand-start", action="store_true", dest="random_start", default=False)
