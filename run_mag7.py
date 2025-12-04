@@ -22,10 +22,6 @@ if "../" not in sys.path: sys.path.append("../")
 from lib import plotting
 from Solvers.Abstract_Solver import AbstractSolver, Statistics
 import Solvers.Available_solvers as avs
-from lib.envs.gridworld import GridworldEnv
-from lib.envs.blackjack import BlackjackEnv
-from lib.envs.cliff_walking import CliffWalkingEnv
-from lib.envs.windy_gridworld import WindyGridworldEnv
 from lib.envs.mag7_trading import MAG7TradingEnv
 
 # ==========================================
@@ -42,16 +38,10 @@ def compute_indicators(df):
     exp1 = close.ewm(span=12, adjust=False).mean()
     exp2 = close.ewm(span=26, adjust=False).mean()
     macd = exp1 - exp2
-    # signal = macd.ewm(span=9, adjust=False).mean()
-    
-    # sma20 = close.rolling(window=20).mean()
-    # sma_ratio = close / sma20
 
     return pd.DataFrame({'RSI': rsi/100.0, 
-                         'MACD': macd,
-                        #  'Signal': signal,
-                        #  'SMA_Ratio': sma_ratio
-                         }).fillna(0)
+                         'MACD': macd
+                          }).fillna(0)
 
 def load_data_raw(data_dir="data"):
     """Loads data but returns raw arrays for splitting later."""
@@ -124,20 +114,64 @@ def getEnv(options, split='train', split_rate=0.8):
                           action_space_mode=options.action_space_mode)
 
 # ==========================================
-# 2. RUNNER & BACKTEST LOGIC
+# 2. PLOTTING & BACKTEST LOGIC
 # ==========================================
-def calculate_bnh(env):
-    """Calculate Buy & Hold Return for the current episode timeframe."""
-    try:
-        start_prices = env.prices[0, :, 3] # Index 0 relative to this dataset
-        end_prices = env.prices[env.t, :, 3]
-        start_prices = np.where(start_prices == 0, 1e-9, start_prices)
-        shares = (env.initial_cash / 7.0) / start_prices
-        final_val = np.sum(shares * end_prices)
-        return (final_val - env.initial_cash) / env.initial_cash
-    except: return 0.0
 
-def run_backtest(env, solver):
+def plot_training_curve(stats, model= "ML", outfile="out"):
+    """
+    Plots the Return (Reward) per episode and the Moving Average.
+    Saves the plot as a PNG and the data as a CSV.
+    """
+    # 1. Convert list of rewards to a Pandas Series
+    rewards = pd.Series(stats.episode_rewards)
+    
+    # 2. Calculate Rolling Average 
+    window_size = max(10, int(len(rewards) * 0.1))
+    rolling_avg = rewards.rolling(window=window_size, min_periods=1).mean()
+
+    # ==========================================
+    # [NEW] Save Training Data to CSV
+    # ==========================================
+    # Create a clean DataFrame for the CSV output
+    df_training = pd.DataFrame({
+        "Episode": range(1, len(rewards) + 1),
+        "Reward": rewards,
+        f"Moving_Avg_Window_{window_size}": rolling_avg
+    })
+
+    # Ensure Results directory exists
+    if not os.path.exists("Results"): 
+        os.makedirs("Results")
+
+    # Construct file path and save
+    csv_path = os.path.join("Results", f"{outfile}_training.csv")
+    df_training.to_csv(csv_path, index=False)
+    print(f"Training data saved to {csv_path}")
+    # ==========================================
+
+    # 3. Generate the Plot
+    plt.figure(figsize=(10, 5))
+    
+    # Plot Raw Returns
+    plt.plot(rewards, label='Episode Return', alpha=0.3, color='blue')
+    
+    # Plot Average Returns
+    plt.plot(rolling_avg, label=f'Avg Return (MA-{window_size})', color='red', linewidth=2)
+    
+    plt.title("Mag7 {} Return".format(model))
+    plt.xlabel("Episode")
+    plt.ylabel("Return ($)")
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    
+    # 4. Save the Chart
+    chart_path = os.path.join("Results", f"{outfile}_training.png")
+    plt.savefig(chart_path)
+    print(f"Training chart saved to {chart_path}")
+    
+    plt.show()
+
+def run_backtest(env, solver, options):
     """Runs a single full pass over the Test Data."""
     print("\n>>> STARTING BACKTEST ON 20% TEST DATA <<<")
     state, _ = env.reset()
@@ -156,36 +190,27 @@ def run_backtest(env, solver):
         # Greedy action (no noise)
         action = solver.select_action(state, training = False) 
         
-        
-        # if hasattr(action, 'detach'): #detach tensor to np if needed
-        #         action = action.detach().cpu().numpy()
-                
         state, reward, term, trunc, info = env.step(action)
         done = term or trunc
         
         # Track Agent Value
         agent_vals.append(info['portfolio_value'])
         
-        # Track Market Value (recalculated at every step for the plot)
+        # Track Market Value
         curr_prices = env.prices[env.t, :, 3]
-        mkt_val = np.sum(shares * curr_prices) + (initial_cash - np.sum(shares * start_prices)) # Approx
-        # Easier: Just track the value of the basket
         market_vals.append(np.sum(shares * curr_prices))
     
     if options.outfile:
-        # 1. Define and create directory if missing
         results_dir = "Results"
         if not os.path.exists(results_dir):
             os.makedirs(results_dir)
 
-        # 2. Create dataframe
         df_results = pd.DataFrame({
             "Time_Step": range(len(agent_vals)),
             "Agent_Value": agent_vals,
             "Market_Value": market_vals
         })
         
-        # 3. Construct full path
         fname = options.outfile
         full_path = os.path.join(results_dir, fname)
         data_path = full_path + '.csv'
@@ -206,19 +231,15 @@ def run_backtest(env, solver):
     chart_path = full_path + '.png'
     plt.savefig(chart_path)
     
-    
     print(f"Saved test results saved to {data_path}")
     print(f"Saved chart saved to {chart_path}")
     
-    # Calculate final returns for summary
     agent_ret = (agent_vals[-1] - initial_cash) / initial_cash
     mkt_ret = (market_vals[-1] - initial_cash) / initial_cash
-    print(f"Results saved to {full_path}")
     print(f"Final Agent Return: {agent_ret:.2%}")
     print(f"Final Market Return: {mkt_ret:.2%}")
     
     plt.show()
-    
 
 def build_parser():
     parser = optparse.OptionParser()
@@ -240,12 +261,10 @@ def build_parser():
     parser.add_option("-d", "--data_dir", dest="data_dir", default="data")
     parser.add_option("-A", "--action_space_mode", dest="action_space_mode", default="multidiscrete")
     
-    # --- FIX: Added explicit 'dest' arguments here ---
     parser.add_option("-m", "--replay", type="int", dest="replay_memory_size", default=100000)
     parser.add_option("-N", "--update", type="int", dest="update_target_estimator_every", default=1000)
     parser.add_option("-b", "--batch_size", type="int", dest="batch_size", default=64)
     parser.add_option("-x", "--experiment_dir", dest="experiment_dir", default="Experiments")
-    
     
     parser.add_option("--no-plots", action="store_true", dest="disable_plots", default=False)
     parser.add_option("--rand-start", action="store_true", dest="random_start", default=False)
@@ -286,9 +305,13 @@ def main(options):
         
         print(f"Episode {i+1}: Reward {rew:.4f}")
 
-    # 4. Backtest Phase
+    # 4. Plot Training Stats (Return & Return Avg)
     if not options.disable_plots:
-        run_backtest(test_env, solver)
+        plot_training_curve(stats, model=str(solver), outfile=options.outfile)
+
+    # 5. Backtest Phase
+    if not options.disable_plots:
+        run_backtest(test_env, solver, options)
         
     return {"stats": stats, "solver": solver}
 
