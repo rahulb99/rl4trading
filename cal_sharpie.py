@@ -7,7 +7,7 @@ input_file = "Results/mag7_combined_results.csv"
 output_file = "Results/mag7_performance_metrics.csv"
 
 # The baseline cash you started with
-INITIAL_CASH = 1000000 
+INITIAL_CASH = 100000 
 
 # Risk-Free Rate (Annualized 4.5% for Sharpe)
 RISK_FREE_RATE_ANNUAL = 3.75/100

@@ -8,33 +8,33 @@ import matplotlib.pyplot as plt
 folder_path = os.path.abspath("Results") # "." means current directory
 
 # # List of your specific files
-# file_list = [
-#     "mag7_ddqn.csv",
-#     "mag7_dqn.csv",
-#     "mag7_mda2c.csv",
-#     "mag7_mdreinforce.csv",
-#     "mag7_ddpg.csv"
-# ]
-# merge_cols = ['Time_Step', 'Agent_Value']
-# preserve_cols = {
-#     'Time_Step': 'Time_Step',
-#     'Market_Value': 'Buy_n_Hold'
-#                 }
-# outfile_name = "mag7_results.csv"
+file_list = [
+    "mag7_ddqn.csv",
+    "mag7_dqn.csv",
+    "mag7_mda2c.csv",
+    "mag7_mdreinforce.csv",
+    "mag7_ddpg.csv"
+]
+merge_cols = ['Time_Step', 'Agent_Value']
+preserve_cols = {
+    'Time_Step': 'Time_Step',
+    'Market_Value': 'Buy_n_Hold'
+                }
+outfile_name = "mag7_combined_results.csv"
 
 # List of your specific files
-file_list = [
-    "mag7_ddqn_training.csv",
-    "mag7_dqn_training.csv",
-    "mag7_mda2c_training.csv",
-    "mag7_mdreinforce_training.csv",
-    "mag7_ddpg_training.csv"
-]
-merge_cols = ['Episode', 'Reward']
-preserve_cols = {
-    'Episode': 'Episode'
-                }
-outfile_name = "mag7_results_training.csv"
+# file_list = [
+#     "mag7_ddqn_training.csv",
+#     "mag7_dqn_training.csv",
+#     "mag7_mda2c_training.csv",
+#     "mag7_mdreinforce_training.csv",
+#     "mag7_ddpg_training.csv"
+# ]
+# merge_cols = ['Episode', 'Reward']
+# preserve_cols = {
+#     'Episode': 'Episode'
+#                 }
+# outfile_name = "mag7_results_training.csv"
 
 
 

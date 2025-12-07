@@ -8,7 +8,7 @@ class MAG7TradingEnv(gym.Env):
     metadata = {"render_modes": ["human"]}
     name = "MAG7TradingEnv"
 
-    def __init__(self, prices, indicators, max_k, initial_cash, random_start=True, min_steps = 50, action_space_mode="multidiscrete", penalty = 0.01):
+    def __init__(self, prices, indicators, max_k, initial_cash, random_start=True, min_steps = 50, action_space_mode="multidiscrete"):
         super().__init__()
         self.prices = prices
         self.indicators = indicators
@@ -21,7 +21,6 @@ class MAG7TradingEnv(gym.Env):
         self.base_prices = None
         self.min_steps = min(max(min_steps, 1), self.T)
         self.action_space_mode = action_space_mode
-        self.penalty = penalty
 
         obs_dim = 2 + self.n_assets + self.n_assets * (self.n_price_feats + self.n_ind_feats)
         
@@ -121,7 +120,7 @@ class MAG7TradingEnv(gym.Env):
         prices_t = self.prices[self.t, :, 3] # Get Low price for all stock at time t
         
         # penalties = 0.0
-        trade_happened = False
+        # trade_happened = False
         
         # PASS 1: EXECUTE ALL SELLS
         for i in range(self.n_assets):
@@ -130,15 +129,12 @@ class MAG7TradingEnv(gym.Env):
                 price = prices_t[i]
                 max_sell = self.positions[i]
                 
-                # if max_sell == 0:
-                #     penalties -= self.penalty
-                
                 size = min(-desired, max_sell) 
                 
                 if size != 0:
                     self.cash += size * price
                     self.positions[i] -= size
-                    trade_happened = True
+                    # trade_happened = True
 
         # PASS 2: EXECUTE ALL BUYS
         for i in range(self.n_assets):
@@ -156,7 +152,7 @@ class MAG7TradingEnv(gym.Env):
                 if size != 0:
                     self.cash -= size * price
                     self.positions[i] += size
-                    trade_happened = True
+                    # trade_happened = True
 
         old_val = self.portfolio_value
         
@@ -200,10 +196,10 @@ class MAG7TradingEnv(gym.Env):
         
         # Check Cash Penalty (Force Trading)
         # Lower this from -0.01 to -0.001 so it's not fatal
-        if not trade_happened:
-            # If we are holding mostly cash (>90%), apply penalty
-            if (self.cash / self.portfolio_value) > 0.9:
-                reward -= self.penalty  # Force it to Buy
+        # if not trade_happened:
+        #     # If we are holding mostly cash (>90%), apply penalty
+        #     if (self.cash / self.portfolio_value) > 0.9:
+        #         reward -= self.penalty  # Force it to Buy
             # print(action)
         
         # cash_ratio = self.cash / self.portfolio_value
