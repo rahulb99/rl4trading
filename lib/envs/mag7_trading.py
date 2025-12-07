@@ -174,7 +174,7 @@ class MAG7TradingEnv(gym.Env):
         
         agent_ret = 0.0
         if self.portfolio_value > 0:
-            agent_ret = raw_pnl / self.portfolio_value
+            agent_ret = raw_pnl / old_val
         
         reward = agent_ret
         

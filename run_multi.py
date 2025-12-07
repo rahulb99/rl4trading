@@ -99,7 +99,7 @@ def main():
     if not args.indices:
         print("No indices provided.")
         print_targets()
-        print("Usage example: python run_multi.py 0 5 --parallel")
+        print("Usage example: python run_multi.py 0 4  --parallel")
         return
 
     # 3. Validate Indices
