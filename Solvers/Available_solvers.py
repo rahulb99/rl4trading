@@ -26,6 +26,7 @@ solvers = [
     "mdreinforce",
     "didqn",
     "diddqn",
+    "cddpg"
 ]
 
 
@@ -106,6 +107,10 @@ def get_solver_class(name):
         from Solvers.DiscreteDDQN import DiscreteDDQN
 
         return DiscreteDDQN
+    elif name == solvers[19]:
+        from Solvers.ContinuousDDPG import ContinuousDDPG
+
+        return ContinuousDDPG
     else:
         assert False, "unknown solver name {}. solver must be from {}".format(
             name, str(solvers)

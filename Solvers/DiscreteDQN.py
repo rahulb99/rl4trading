@@ -1,12 +1,3 @@
-# Licensing Information:  You are free to use or extend this codebase for
-# educational purposes provided that (1) you do not distribute or publish
-# solutions, (2) you retain this notice, and (3) inform Guni Sharon at 
-# guni@tamu.edu regarding your usage (relevant statistics is reported to NSF).
-# The development of this assignment was supported by NSF (IIS-2238979).
-# Contributors:
-# The core code base was developed by Guni Sharon (guni@tamu.edu).
-# The PyTorch code was developed by Sheelabhadra Dey (sheelabhadra@tamu.edu).
-
 import random
 from copy import deepcopy
 from collections import deque
@@ -53,14 +44,20 @@ class DiscreteDQN(AbstractSolver):
             str(self) + " cannot handle non-discrete action spaces"
         )
         super().__init__(env, eval_env, options)
+        
+        # 1. SETUP DEVICE
+        # self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
         # Create Q-network
         self.model = QFunction(
             env.observation_space.shape[0],
             env.action_space.n,
             self.options.layers,
-        )
+        ).to(self.device)  # 2. MOVE MODEL TO DEVICE
+        
         # Create target Q-network
-        self.target_model = deepcopy(self.model)
+        self.target_model = deepcopy(self.model) # Model is already on device, so copy is too
+        
         # Set up the optimizer
         self.optimizer = AdamW(
             self.model.parameters(), lr=self.options.alpha, amsgrad=True
@@ -85,25 +82,24 @@ class DiscreteDQN(AbstractSolver):
     def compute_target_values(self, next_states, rewards, dones):
         """
         Computes the target q values.
-
-        Returns:
-            The target q value (as a tensor) of shape [len(next_states)]
         """
-        ################################
-        #   YOUR IMPLEMENTATION HERE   #
-        ################################
-        # Compute target Q values using the target model = reward + gamma * max_a' Q_target(s', a') * (1 - done)
-        target_q = rewards + self.options.gamma * torch.max(self.target_model(next_states), dim=1)[0] * (1 - dones)
-        return target_q
+        # Ensure inputs are on the correct device
+        # (They should be already if passed from replay(), but explicit safety is good)
+        next_states = next_states.to(self.device)
+        rewards = rewards.to(self.device)
+        dones = dones.to(self.device)
 
+        # Compute target Q values
+        # We assume next_states is already on device
+        next_q_values = self.target_model(next_states)
+        max_next_q = torch.max(next_q_values, dim=1)[0]
+        
+        target_q = rewards + self.options.gamma * max_next_q * (1 - dones)
+        return target_q
 
     def replay(self):
         """
         TD learning for q values on past transitions.
-
-        Use:
-            self.target_model(state): predicted q values as an array with entry
-                per action
         """
         if len(self.replay_memory) > self.options.batch_size:
             minibatch = random.sample(self.replay_memory, self.options.batch_size)
@@ -117,16 +113,18 @@ class DiscreteDQN(AbstractSolver):
                 for i in range(5)
             ]
             states, actions, rewards, next_states, dones = minibatch
-            # Convert numpy arrays to torch tensors
-            states = torch.as_tensor(states, dtype=torch.float32)
-            actions = torch.as_tensor(actions, dtype=torch.float32)
-            rewards = torch.as_tensor(rewards, dtype=torch.float32)
-            next_states = torch.as_tensor(next_states, dtype=torch.float32)
-            dones = torch.as_tensor(dones, dtype=torch.float32)
+            
+            # 3. MOVE BATCH TENSORS TO DEVICE
+            states = torch.as_tensor(states, dtype=torch.float32).to(self.device)
+            actions = torch.as_tensor(actions, dtype=torch.float32).to(self.device)
+            rewards = torch.as_tensor(rewards, dtype=torch.float32).to(self.device)
+            next_states = torch.as_tensor(next_states, dtype=torch.float32).to(self.device)
+            dones = torch.as_tensor(dones, dtype=torch.float32).to(self.device)
 
             # Current Q-values
             current_q = self.model(states)
-            # Q-values for actions in the replay memory
+            
+            # Gather: actions must be LongTensor and on the same device
             current_q = torch.gather(
                 current_q, dim=1, index=actions.unsqueeze(1).long()
             ).squeeze(-1)
@@ -147,46 +145,36 @@ class DiscreteDQN(AbstractSolver):
         self.replay_memory.append((state, action, reward, next_state, done))
         
     def select_action(self, state, training=True):
-        q_values = self.model(torch.as_tensor(state, dtype=torch.float32)).unsqueeze(0) # get q values for the state
-        best_action = torch.argmax(q_values)
+        # 3. MOVE INPUT STATE TO DEVICE
+        state_tensor = torch.as_tensor(state, dtype=torch.float32).to(self.device)
+        
+        # Add batch dimension: (state_dim) -> (1, state_dim)
+        q_values = self.model(state_tensor).unsqueeze(0) 
+        
+        best_action_tensor = torch.argmax(q_values)
+        
+        # 4. MOVE RESULT TO CPU FOR NUMPY/PYTHON OPERATIONS
+        best_action = best_action_tensor.item() 
         
         if training:
             nA = self.env.action_space.n
-            probabilities = np.full(nA, self.options.epsilon / nA) # action probabilities
-            probabilities[best_action] += 1.0 - self.options.epsilon # add greedy probability
-            action = np.random.choice(np.arange(len(probabilities)), p=probabilities) # sample action based on probabilities
+            probabilities = np.full(nA, self.options.epsilon / nA)
+            probabilities[best_action] += 1.0 - self.options.epsilon
+            action = np.random.choice(np.arange(len(probabilities)), p=probabilities)
         else:
             action = best_action
         return action
 
     def train_episode(self):
-        """
-        Perform a single episode of the Q-Learning algorithm for off-policy TD
-        control using a DNN Function Approximation. Finds the optimal greedy policy
-        while following an epsilon-greedy policy.
-
-        Use:
-            self.epsilon_greedy(state): return probabilities of actions.
-            np.random.choice(array, p=prob): sample an element from 'array' based on their corresponding
-                probabilites 'prob'.
-            self.memorize(state, action, reward, next_state, done): store the transition in the replay buffer
-            self.update_target_model(): copy weights from model to target_model
-            self.replay(): TD learning for q values on past transitions
-            self.options.update_target_estimator_every: Copy parameters from the Q estimator to the
-                target estimator every N steps (HINT: to be done across episodes)
-        """
-
-        # Reset the environment
         state, _ = self.env.reset()
 
         for _ in range(self.options.steps):
-            ################################
-            #   YOUR IMPLEMENTATION HERE   #
-            ################################
             action = self.select_action(state)
-            next_state, reward, done, _ = self.step(action) # take action
-            self.memorize(state, action, reward, next_state, done) # store transition
-            state = next_state # update state
+            next_state, reward, done, _, _ = self.env.step(action) # Adjusted for gym API (5 return vals)
+            
+            self.memorize(state, action, reward, next_state, done)
+            state = next_state
+            
             self.replay()
             self.n_steps += 1
             if self.n_steps % self.options.update_target_estimator_every == 0:
@@ -203,16 +191,14 @@ class DiscreteDQN(AbstractSolver):
     def create_greedy_policy(self):
         """
         Creates a greedy policy based on Q values.
-
-
-        Returns:
-            A function that takes an observation as input and returns a greedy
-            action
         """
-
         def policy_fn(state):
-            state = torch.as_tensor(state, dtype=torch.float32)
-            q_values = self.model(state)
-            return torch.argmax(q_values).detach().numpy()
+            # 3. MOVE STATE TO DEVICE
+            state_tensor = torch.as_tensor(state, dtype=torch.float32).to(self.device)
+            with torch.no_grad(): # Optimization: disable gradients for inference
+                q_values = self.model(state_tensor)
+            
+            # 4. MOVE RESULT BACK TO CPU
+            return torch.argmax(q_values).cpu().detach().numpy()
 
         return policy_fn

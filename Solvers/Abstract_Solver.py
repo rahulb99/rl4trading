@@ -10,7 +10,7 @@ from abc import ABC, abstractmethod
 from enum import Enum
 import gymnasium as gym
 import time
-
+import torch
 
 class AbstractSolver(ABC):
     def __init__(self, env, eval_env, options):
@@ -20,6 +20,11 @@ class AbstractSolver(ABC):
         self.options = options
         self.total_steps = 0
         self.render = False
+        # if torch.cuda.is_available() and options.gpu:
+        #     self.device = torch.device("cuda")
+        # else:
+        #     self.device = torch.device("cpu")
+        self.device = torch.device("cuda" if torch.cuda.is_available() and options.gpu else "cpu")
 
     def init_stats(self):
         self.statistics[1:] = [0] * (len(Statistics) - 1)

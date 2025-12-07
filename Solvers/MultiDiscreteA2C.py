@@ -38,11 +38,18 @@ class ActorCriticNetwork(nn.Module):
         
         # Critic head: Value function (scalar)
         self.value_layer = nn.Linear(hidden_sizes[-1], 1)
+        
+        # [FIX 2] Tiny Init for Actor (Forces Uniform Probability at start)
+        nn.init.uniform_(self.actor_layer.weight, -0.001, 0.001)
+        nn.init.constant_(self.actor_layer.bias, 0.0)
+        
+        
 
     def forward(self, obs):
         x = torch.cat([obs], dim=-1)
         for layer in self.layers:
-            x = F.relu(layer(x))
+            # x = F.relu(layer(x))
+            x = torch.tanh(layer(x))
             
         # Actor head
         # Reshape to (Batch, n_assets, n_actions_per_asset) so we can create
@@ -75,10 +82,20 @@ class MultiDiscreteA2C(AbstractSolver):
         # Extract dimensions from the MultiDiscrete space
         # env.action_space.nvec gives the number of actions for each dimension
         # In MAG7TradingEnv, this is [2*k+1, 2*k+1, ...]
-        self.nvec = env.action_space.nvec
-        n_assets = len(self.nvec)
-        n_actions_per_asset = int(self.nvec[0]) # Assuming uniform action space per asset
+        # self.nvec = env.action_space.nvec
+        # n_assets = len(self.nvec)
+        # n_actions_per_asset = int(self.nvec[0]) # Assuming uniform action space per asset
 
+        if hasattr(env.action_space, 'nvec'):
+            self.nvec = env.action_space.nvec
+            n_assets = len(self.nvec)
+            n_actions_per_asset = int(self.nvec[0])
+        else:
+            # Fallback for standard Discrete (treat as 1 asset)
+            n_assets = 1
+            n_actions_per_asset = env.action_space.n
+
+        
         # Create actor-critic network
         self.actor_critic = ActorCriticNetwork(
             obs_dim=env.observation_space.shape[0], 

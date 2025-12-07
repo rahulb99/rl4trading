@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python Debugger: Current File with Arguments",
+            "name": "Current File with Arguments",
             "type": "debugpy",
             "request": "launch",
             "program": "${file}",
@@ -13,180 +13,220 @@
             "args": "${command:pickArgs}"
         },
         {
-            "name": "Python Debugger: Help",
+            "name": "Help",
             "type": "debugpy",
             "request": "launch",
             "program": "run.py",
             "console": "integratedTerminal",
-            "args": ["--help"]
+            "args": ["--help", "--no-plots"]
         },
         {
-            "name": "Python Debugger: Value Iteration 1",
+            "name": "Value Iteration 1",
             "type": "debugpy",
             "request": "launch",
             "program": "run.py",
             "console": "integratedTerminal",
-            "args": ["-s", "vi", "-d", "Gridworld", "-e", "100", "-g", "0.9"]
+            "args": ["-s", "vi", "-d", "Gridworld", "-e", "100", "-g", "0.9", "--no-plots"]
         },
         {
-            "name": "Python Debugger: Value Iteration 2",
+            "name": "Value Iteration 2",
             "type": "debugpy",
             "request": "launch",
             "program": "run.py",
             "console": "integratedTerminal",
-            "args": ["-s", "vi", "-d", "Gridworld", "-e", "100", "-g", "0.4"]
+            "args": ["-s", "vi", "-d", "Gridworld", "-e", "100", "-g", "0.4", "--no-plots"]
         },
         {
-            "name": "Python Debugger: Value Iteration 3",
+            "name": "Value Iteration 3",
             "type": "debugpy",
             "request": "launch",
             "program": "run.py",
             "console": "integratedTerminal",
-            "args": ["-s", "vi", "-d", "FrozenLake-v1", "-e", "100", "-g", "0.9"]
+            "args": ["-s", "vi", "-d", "FrozenLake-v1", "-e", "100", "-g", "0.9", "--no-plots"]
         },
         {
-            "name": "Python Debugger: Async Value Iteration 1",
+            "name": "Async Value Iteration 1",
             "type": "debugpy",
             "request": "launch",
             "program": "run.py",
             "console": "integratedTerminal",
-            "args": ["-s", "avi", "-d", "FrozenLake-v1", "-e", "100", "-g", "0.5"]
+            "args": ["-s", "avi", "-d", "FrozenLake-v1", "-e", "100", "-g", "0.5", "--no-plots"]
         },
         {
-            "name": "Python Debugger: Async Value Iteration 2",
+            "name": "Async Value Iteration 2",
             "type": "debugpy",
             "request": "launch",
             "program": "run.py",
             "console": "integratedTerminal",
-            "args": ["-s", "avi", "-d", "FrozenLake-v1", "-e", "100", "-g", "0.7"]
+            "args": ["-s", "avi", "-d", "FrozenLake-v1", "-e", "100", "-g", "0.7", "--no-plots"]
         },
         {
-            "name": "Python Debugger: Policy Iteration 1",
+            "name": "Policy Iteration 1",
             "type": "debugpy",
             "request": "launch",
             "program": "run.py",
             "console": "integratedTerminal",
-            "args": ["-s", "pi", "-d", "Gridworld", "-e", "100", "-g", "0.9"]
+            "args": ["-s", "pi", "-d", "Gridworld", "-e", "100", "-g", "0.9", "--no-plots"]
         },
         {
-            "name": "Python Debugger: Policy Iteration 2",
+            "name": "Policy Iteration 2",
             "type": "debugpy",
             "request": "launch",
             "program": "run.py",
             "console": "integratedTerminal",
-            "args": ["-s", "pi", "-d", "Gridworld", "-e", "100", "-g", "0.4"]
+            "args": ["-s", "pi", "-d", "Gridworld", "-e", "100", "-g", "0.4", "--no-plots"]
         },
         {
-            "name": "Python Debugger: Monte-Carlo Control 1",
+            "name": "Monte-Carlo Control 1",
             "type": "debugpy",
             "request": "launch",
             "program": "run.py",
             "console": "integratedTerminal",
-            "args": ["-s", "mc", "-d", "Blackjack", "-e", "500000", "-g", "1.0", "-p", "0.1"]
+            "args": ["-s", "mc", "-d", "Blackjack", "-e", "500000", "-g", "1.0", "-p", "0.1", "--no-plots"]
         },
         {
-            "name": "Python Debugger: Monte-Carlo Control 2",
+            "name": "Monte-Carlo Control 2",
             "type": "debugpy",
             "request": "launch",
             "program": "run.py",
             "console": "integratedTerminal",
-            "args": ["-s", "mc", "-d", "Blackjack", "-e", "500000", "-g", "0.8", "-p", "0.1"]
+            "args": ["-s", "mc", "-d", "Blackjack", "-e", "500000", "-g", "0.8", "-p", "0.1", "--no-plots"]
         },
         {
-            "name": "Python Debugger: Monte-Carlo Control with Importance Sampling 1",
+            "name": "Monte-Carlo Control with Importance Sampling 1",
             "type": "debugpy",
             "request": "launch",
             "program": "run.py",
             "console": "integratedTerminal",
-            "args": ["-s", "mcis", "-d", "Blackjack", "-e", "500000", "-g", "1.0"]
+            "args": ["-s", "mcis", "-d", "Blackjack", "-e", "500000", "-g", "1.0", "--no-plots"]
         },
         {
-            "name": "Python Debugger: Monte-Carlo Control with Importance Sampling 2",
+            "name": "Monte-Carlo Control with Importance Sampling 2",
             "type": "debugpy",
             "request": "launch",
             "program": "run.py",
             "console": "integratedTerminal",
-            "args": ["-s", "mcis", "-d", "Blackjack", "-e", "500000", "-g", "0.7"]
+            "args": ["-s", "mcis", "-d", "Blackjack", "-e", "500000", "-g", "0.7", "--no-plots"]
         },
         {
-            "name": "Python Debugger: Tabular Q-Learning",
+            "name": "Tabular Q-Learning",
             "type": "debugpy",
             "request": "launch",
             "program": "run.py",
             "console": "integratedTerminal",
-            "args": ["-s", "ql", "-d", "CliffWalking", "-e", "500", "-a", "0.5", "-g", "1.0", "-p", "0.1"]
+            "args": ["-s", "ql", "-d", "CliffWalking", "-e", "500", "-a", "0.5", "-g", "1.0", "-p", "0.1", "--no-plots"]
         },
         {
-            "name": "Python Debugger: SARSA",
+            "name": "SARSA",
             "type": "debugpy",
             "request": "launch",
             "program": "run.py",
             "console": "integratedTerminal",
-            "args": ["-s", "sarsa", "-d", "WindyGridworld", "-e", "200", "-a", "0.5", "-g", "1.0", "-p", "0.1"]
+            "args": ["-s", "sarsa", "-d", "WindyGridworld", "-e", "200", "-a", "0.5", "-g", "1.0", "-p", "0.1", "--no-plots"]
         },
         {
-            "name": "Python Debugger: DQN 1",
+            "name": "DQN 1",
             "type": "debugpy",
             "request": "launch",
             "program": "run.py",
             "console": "integratedTerminal",
-            "args": ["-s", "dqn", "-t", "2000", "-d", "CartPole-v1", "-e", "100", "-a", "0.01", "-g", "0.95", "-p", "1.0", "-P", "0.01", "-c", "0.95", "-m", "2000", "-N", "100", "-b", "32", "-l", "[32,32]"]
+            "args": ["-s", "dqn", "-t", "2000", "-d", "CartPole-v1", "-e", "100", "-a", "0.01", "-g", "0.95", "-p", "1.0", "-P", "0.01", "-c", "0.95", "-m", "2000", "-N", "100", "-b", "32", "-l", "[32,32]", "--no-plots"]
         },
         {
-            "name": "Python Debugger: DQN 2",
+            "name": "DQN 2",
             "type": "debugpy",
             "request": "launch",
             "program": "run.py",
             "console": "integratedTerminal",
-            "args": ["-s", "dqn", "-t", "1000", "-d", "LunarLander-v2", "-e", "500", "-a", "0.001", "-g", "0.99", "-p", "1.0", "-P", "0.05", "-c", "0.995", "-m", "10000", "-N", "100", "-b", "64", "-l", "[128,128]"]
+            "args": ["-s", "dqn", "-t", "1000", "-d", "LunarLander-v2", "-e", "500", "-a", "0.001", "-g", "0.99", "-p", "1.0", "-P", "0.05", "-c", "0.995", "-m", "10000", "-N", "100", "-b", "64", "-l", "[128,128]", "--no-plots"]
         },
         {
-            "name": "Python Debugger: Mag7 DDPG",
+            "name": "Mag7 DDPG",
             "type": "debugpy",
             "request": "launch",
             "program": "run_mag7.py",
             "console": "integratedTerminal",
-            "args": ["-o", "mag7_ddpg", "-s", "ddpg", "-t", "50", "-e", "5000", "-a", "0.001", "-g", "0.99", "-l", "[64,64]", "-b", "100", "-n", "10", "-i", "1000000", "-k", "1000", "--rand-start", "-A", "continuous"]
+            "args": ["-o", "mag7_ddpg", "-s", "cddpg", "-t", "50", "-e", "5000", "-a", "0.0001", "-g", "0.99", "-l", "[64,64]", "-b", "128", "-n", "50", "-i", "1000000", "-k", "100", "--rand-start", "-A", "continuous", "--no-plots", "--gpu"]
         },
         {
-            "name": "Python Debugger: Mag7 Discrete DQN",
+            "name": "Mag7 Discrete DQN",
             "type": "debugpy",
             "request": "launch",
             "program": "run_mag7.py",
             "console": "integratedTerminal",
-            "args": ["-o", "mag7_dqn", "-s", "didqn", "-t", "50", "-e", "5000", "-a", "0.001", "-g", "0.99", "-p", "1.0", "-P", "0.05", "-c", "0.995", "-m", "10000", "-N", "100", "-b", "64", "-l", "[128,128]", "-i", "1000000", "-k", "5", "--rand-start", "-A", "discrete"]
+            "args": ["-o", "mag7_dqn", "-s", "didqn", "-t", "50", "-e", "5000", "-a", "0.001", "-g", "0.99", "-p", "1.0", "-P", "0.05", "-c", "0.995", "-m", "10000", "-N", "100", "-b", "64", "-l", "[128,128]", "-i", "1000000", "-k", "5", "--rand-start", "-A", "discrete", "--no-plots", "--gpu"]
         },
         {
-            "name": "Python Debugger: Mag7 Discrete DDQN",
+            "name": "Mag7 Discrete DDQN",
             "type": "debugpy",
             "request": "launch",
             "program": "run_mag7.py",
             "console": "integratedTerminal",
-            "args": ["-o", "mag7_ddqn", "-s", "diddqn", "-t", "50", "-e", "5000", "-a", "0.001", "-g", "0.99", "-p", "1.0", "-P", "0.05", "-c", "0.995", "-m", "10000", "-N", "100", "-b", "64", "-l", "[128,128]", "-i", "1000000", "-k", "5", "--rand-start", "-A", "discrete"]
+            "args": ["-o", "mag7_ddqn", "-s", "diddqn", "-t", "50", "-e", "5000", "-a", "0.001", "-g", "0.99", "-p", "1.0", "-P", "0.05", "-c", "0.995", "-m", "10000", "-N", "100", "-b", "64", "-l", "[128,128]", "-i", "1000000", "-k", "5", "--rand-start", "-A", "discrete", "--no-plots", "--gpu"]
         },
         {
-            "name": "Python Debugger: Mag7 Continuous A2C",
+            "name": "Mag7 Continuous A2C",
             "type": "debugpy",
             "request": "launch",
             "program": "run_mag7.py",
             "console": "integratedTerminal",
-            "args": ["-o", "mag7_ca2c", "-s", "mca2c", "-t", "50", "-e", "5000", "-a", "0.0005", "-g", "0.90", "-l", "[64,64]", "-b", "100", "-n", "10", "-i", "1000000", "-k", "100", "-y", "0.1", "--rand-start", "-A", "continuous"]
+            "args": ["-o", "mag7_ca2c", "-s", "mca2c", "-t", "50", "-e", "5000", "-a", "0.0005", "-g", "0.90", "-l", "[64,64]", "-b", "100", "-n", "10", "-i", "1000000", "-k", "100", "-y", "0.1", "--rand-start", "-A", "continuous", "--no-plots"]
         },
         {
-            "name": "Python Debugger: Mag7 MultiDiscrete A2C",
+            "name": "Mag7 MultiDiscrete A2C",
             "type": "debugpy",
             "request": "launch",
             "program": "run_mag7.py",
             "console": "integratedTerminal",
-            "args": ["-o", "mag7_mda2c", "-s", "mda2c", "-t", "50", "-e", "5000", "-a", "0.0005", "-g", "0.90", "-l", "[64,64]", "-b", "100", "-n", "10", "-i", "1000000", "-k", "100", "-y", "0.01", "--rand-start", "-A", "multidiscrete"]
+            "args": ["-o", "mag7_mda2c", "-s", "mda2c", "-t", "50", "-e", "5000", "-a", "0.0005", "-g", "0.90", "-l", "[64,64]", "-b", "100", "-n", "10", "-i", "1000000", "-k", "100", "-y", "0.01", "--rand-start", "-A", "multidiscrete", "--no-plots"]
         },
         {
-            "name": "Python Debugger: Mag7 MultiDiscrete REINFORCE",
+            "name": "Mag7 MultiDiscrete REINFORCE",
             "type": "debugpy",
             "request": "launch",
             "program": "run_mag7.py",
             "console": "integratedTerminal",
-            "args": ["-o", "mag7_mdreinforce", "-s", "mdreinforce", "-t", "50", "-e", "5000", "-a", "0.0005", "-g", "0.99", "-l", "[64,64]", "-i", "1000000", "-k", "100", "-y", "0.01", "--rand-start", "-A", "multidiscrete"]
-        }
+            "args": ["-o", "mag7_mdreinforce", "-s", "mdreinforce", "-t", "50", "-e", "5000", "-a", "0.0005", "-g", "0.99", "-l", "[64,64]", "-i", "1000000", "-k", "100", "-y", "0.01", "--rand-start", "-A", "multidiscrete", "--no-plots"]
+        },
+        {
+            "name": "AAPL MultiDiscrete REINFORCE",
+            "type": "debugpy",
+            "request": "launch", 
+            "program": "run_mag7.py",
+            "console": "integratedTerminal",
+            "args": ["-o", "aapl_mdreinforce", "-s", "mdreinforce", "-T", "AAPL", "-t", "50", "-e", "5000", "-a", "0.001", "-g", "0.99", "-l", "[128,128]", "-i", "1000000", "-k", "100", "-y", "0.05", "--rand-start", "-A", "discrete", "--no-plots"]
+        },
+        {
+            "name": "AAPL MultiDiscrete A2C",
+            "type": "debugpy",
+            "request": "launch", 
+            "program": "run_mag7.py",
+            "console": "integratedTerminal",
+            "args": ["-o", "aapl_mda2c", "-s", "mda2c", "-T", "AAPL", "-t", "50", "-e", "5000", "-a", "0.0005", "-g", "0.90", "-l", "[64,64]", "-b", "100", "-n", "10", "-i", "1000000", "-k", "100", "-y", "0.01", "--rand-start", "-A", "discrete", "--no-plots"]
+        },
+        {
+            "name": "AAPL DDPG",
+            "type": "debugpy",
+            "request": "launch", 
+            "program": "run_mag7.py",
+            "console": "integratedTerminal",
+            "args": ["-o", "aapl_ddpg", "-s", "cddpg", "-T", "AAPL", "-t", "50", "-e", "5000", "-a", "0.001", "-g", "0.99", "-l", "[64,64]", "-b", "100", "-n", "50", "-i", "1000000", "-k", "100", "--rand-start", "-A", "continuous", "--no-plots"]
+        },
+        {
+            "name": "AAPL Discrete DQN",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "run_mag7.py",
+            "console": "integratedTerminal",
+            "args": ["-o", "aapl_dqn", "-s", "didqn", "-T", "AAPL", "-t", "50", "-e", "5000", "-a", "0.001", "-g", "0.99", "-p", "0.01", "-P", "0.05", "-c", "0.995", "-m", "10000", "-N", "100", "-b", "64", "-l", "[128,128]", "-i", "1000000", "-k", "100", "--rand-start", "-A", "discrete", "--no-plots"]
+        },
+        {
+            "name": "AAPL Discrete DDQN",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "run_mag7.py",
+            "console": "integratedTerminal",
+            "args": ["-o", "aapl_ddqn", "-s", "diddqn", "-T", "AAPL", "-t", "50", "-e", "5000", "-a", "0.001", "-g", "0.99", "-p", "0.01", "-P", "0.05", "-c", "0.995", "-m", "10000", "-N", "100", "-b", "64", "-l", "[128,128]", "-i", "1000000", "-k", "100", "--rand-start", "-A", "discrete", "--no-plots"]
+        },
     ]
 }

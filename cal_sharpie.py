@@ -13,7 +13,7 @@ INITIAL_CASH = 1000000
 RISK_FREE_RATE_ANNUAL = 3.75/100
 
 # Trading Days (252 for stocks, 365 for crypto)
-TRADING_DAYS = 252 
+TRADING_DAYS = 249 
 # ---------------------
 
 def calculate_metrics(file_path):

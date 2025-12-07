@@ -2,69 +2,6 @@ import pandas as pd
 import os
 import matplotlib.pyplot as plt
 
-
-def plot_training_performance(file_path, initial_cash = 1000000):
-    if not os.path.exists(file_path):
-        print(f"Error: File {file_path} not found.")
-        return
-
-    # 1. Load Data
-    df = pd.read_csv(file_path)
-    
-    # Check if 'Final_Portfolio_Value' exists (from your new code)
-    # If not, fallback to 'Reward' but warn the user
-    if 'Final_Portfolio_Value' in df.columns:
-        metric = 'Final_Portfolio_Value'
-        ylabel = 'Portfolio Value ($)'
-        title_metric = 'Wealth'
-        baseline = initial_cash
-    else:
-        metric = 'Reward'
-        ylabel = 'Reward Points'
-        title_metric = 'Reward'
-        baseline = 0
-        print("Warning: 'Final_Portfolio_Value' not found. Plotting 'Reward' instead.")
-
-    # 2. Calculate Statistics
-    # EMA (Exponential Moving Average) - Reacts faster than Simple Moving Average
-    span = max(10, int(len(df) * 0.05)) # Dynamic window (5% of total episodes)
-    df['EMA'] = df[metric].ewm(span=span, adjust=False).mean()
-    
-    # Rolling Standard Deviation (Volatility)
-    df['Std'] = df[metric].rolling(window=span).std()
-
-    # 3. Plotting
-    plt.figure(figsize=(12, 6))
-
-    # A. The Baseline (Breakeven point)
-    plt.axhline(y=baseline, color='black', linestyle='--', alpha=0.5, label='Baseline')
-
-    # B. The Raw Data (Faint dots) to show the "real" chaos
-    plt.scatter(df['Episode'], df[metric], color='gray', alpha=0.1, s=10, label='Raw Episode Result')
-
-    # C. The Trend Line (EMA)
-    plt.plot(df['Episode'], df['EMA'], color='#1f77b4', linewidth=2, label=f'Trend (EMA-{span})')
-
-    # D. The Volatility Zone (Shading)
-    plt.fill_between(
-        df['Episode'], 
-        df['EMA'] - df['Std'], 
-        df['EMA'] + df['Std'], 
-        color='#1f77b4', alpha=0.15, label='Volatility Range'
-    )
-
-    plt.title(f"Training Progress: Agent {title_metric} over Time")
-    plt.xlabel("Episode")
-    plt.ylabel(ylabel)
-    plt.legend(loc='upper left')
-    plt.grid(True, alpha=0.3)
-    
-    # Save the plot
-    output_img = file_path.replace('.csv', '_plot.png')
-    plt.savefig(output_img)
-    print(f"Plot saved to: {output_img}")
-    plt.show()
-
 # --- Configuration ---
 # Update this path to the folder where your CSV files are stored
 # Example: folder_path = r"C:\Users\Name\Documents\TradingData"

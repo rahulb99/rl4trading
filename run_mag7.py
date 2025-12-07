@@ -38,32 +38,66 @@ def compute_indicators(df):
     exp1 = close.ewm(span=12, adjust=False).mean()
     exp2 = close.ewm(span=26, adjust=False).mean()
     macd = exp1 - exp2
+    # macd = (exp1 - exp2) / close
 
     return pd.DataFrame({'RSI': rsi/100.0, 
                          'MACD': macd
                           }).fillna(0)
 
-def load_data_raw(data_dir="data"):
-    """Loads data but returns raw arrays for splitting later."""
-    tickers = ['AAPL', 'AMZN', 'GOOGL', 'META', 'MSFT', 'NVDA', 'TSLA']
+def load_data_raw(data_source="data", selected_ticker="all"):
+    """
+    Loads data. 
+    - If data_source is a file: loads that specific file.
+    - If data_source is a dir:
+        - If selected_ticker is "all": loads the default Mag7 list.
+        - If selected_ticker is "XYZ": loads only XYZ.csv from that dir.
+    """
     price_feats = ['Open', 'High', 'Low', 'Close', 'Volume']
-    
-    print(f"Loading data from {os.path.abspath(data_dir)}...")
     dfs = {}
+    
+    # 1. Determine Tickers and Paths
+    if os.path.isfile(data_source):
+        print(f"Loading single file target: {os.path.abspath(data_source)}...")
+        ticker_name = os.path.splitext(os.path.basename(data_source))[0]
+        tickers = [ticker_name]
+        file_paths = [data_source]
+        
+    elif os.path.isdir(data_source):
+        print(f"Loading from directory: {os.path.abspath(data_source)}")
+        
+        if selected_ticker == "all":
+            print("Selection: ALL default tickers")
+            tickers = ['AAPL', 'AMZN', 'GOOGL', 'META', 'MSFT', 'NVDA', 'TSLA']
+        else:
+            print(f"Selection: Single ticker '{selected_ticker}'")
+            tickers = [selected_ticker]
+            
+        file_paths = [os.path.join(data_source, f"{t}.csv") for t in tickers]
+        
+    else:
+        raise FileNotFoundError(f"Input {data_source} is not a valid file or directory.")
+
     common_index = None
 
-    for t in tickers:
-        path = os.path.join(data_dir, f"{t}.csv")
-        if not os.path.exists(path): raise FileNotFoundError(f"Missing {path}")
+    # 2. Load Loop
+    for t, path in zip(tickers, file_paths):
+        if not os.path.exists(path): 
+            raise FileNotFoundError(f"Missing file for ticker {t} at: {path}")
+        
         df = pd.read_csv(path, parse_dates=['Date'], index_col='Date')
-        for col in price_feats: df[col] = pd.to_numeric(df[col], errors='coerce')
+        for col in price_feats: 
+            df[col] = pd.to_numeric(df[col], errors='coerce')
+        
         df = df.dropna()
         dfs[t] = df
-        if common_index is None: common_index = df.index
-        else: common_index = common_index.intersection(df.index)
+        
+        if common_index is None: 
+            common_index = df.index
+        else: 
+            common_index = common_index.intersection(df.index)
 
     common_index = common_index.sort_values()
-    print(f"Total Common Days: {len(common_index)}")
+    print(f"Loaded {len(tickers)} asset(s). Total Common Days: {len(common_index)}")
 
     all_prices, all_inds = [], []
     for t in tickers:
@@ -87,7 +121,8 @@ def getEnv(options, split='train', split_rate=0.8):
     global CACHED_PRICES, CACHED_INDS
     
     if CACHED_PRICES is None:
-        CACHED_PRICES, CACHED_INDS = load_data_raw(options.data_dir)
+        # Pass the ticker option to the loader
+        CACHED_PRICES, CACHED_INDS = load_data_raw(options.data_dir, options.ticker)
         
     T = len(CACHED_PRICES)
     split_idx = int(T * split_rate) # 80/20 Split
@@ -95,12 +130,12 @@ def getEnv(options, split='train', split_rate=0.8):
     if split == 'train':
         prices = CACHED_PRICES[:split_idx]
         indicators = CACHED_INDS[:split_idx]
-        random_start = options.random_start # Train env gets random starts
+        random_start = options.random_start
         print(f"Creating TRAIN Env: {len(prices)} days.")
     elif split == 'test':
         prices = CACHED_PRICES[split_idx:]
         indicators = CACHED_INDS[split_idx:]
-        random_start=False # Test env gets sequential start
+        random_start=False
         print(f"Creating TEST Env: {len(prices)} days.")
     else:
         raise Exception("Invalid split")
@@ -118,44 +153,27 @@ def getEnv(options, split='train', split_rate=0.8):
 # ==========================================
 
 def plot_training_curve(stats, model= "ML", outfile="out"):
-    """
-    Plots the Return (Reward) per episode and the Moving Average.
-    Saves the plot as a PNG and the data as a CSV.
-    """
-    # 1. Convert list of rewards to a Pandas Series
     rewards = pd.Series(stats.episode_rewards)
-    
-    # 2. Calculate Rolling Average 
     window_size = max(10, int(len(rewards) * 0.1))
     rolling_avg = rewards.rolling(window=window_size, min_periods=1).mean()
 
-    # ==========================================
-    # [NEW] Save Training Data to CSV
-    # ==========================================
-    # Create a clean DataFrame for the CSV output
+    # Save Training Data to CSV
     df_training = pd.DataFrame({
         "Episode": range(1, len(rewards) + 1),
         "Reward": rewards,
         f"Moving_Avg_Window_{window_size}": rolling_avg
     })
 
-    # Ensure Results directory exists
     if not os.path.exists("Results"): 
         os.makedirs("Results")
 
-    # Construct file path and save
     csv_path = os.path.join("Results", f"{outfile}_training.csv")
     df_training.to_csv(csv_path, index=False)
     print(f"Training data saved to {csv_path}")
-    # ==========================================
 
-    # 3. Generate the Plot
+    # Generate the Plot
     plt.figure(figsize=(10, 5))
-    
-    # Plot Raw Returns
     plt.plot(rewards, label='Episode Return', alpha=0.3, color='blue')
-    
-    # Plot Average Returns
     plt.plot(rolling_avg, label=f'Avg Return (MA-{window_size})', color='red', linewidth=2)
     
     plt.title("Mag7 {} Return".format(model))
@@ -164,12 +182,13 @@ def plot_training_curve(stats, model= "ML", outfile="out"):
     plt.legend()
     plt.grid(True, alpha=0.3)
     
-    # 4. Save the Chart
     chart_path = os.path.join("Results", f"{outfile}_training.png")
     plt.savefig(chart_path)
     print(f"Training chart saved to {chart_path}")
-    
-    plt.show()
+    if not options.disable_plots:
+        plt.show()
+    else:
+        plt.clf()
 
 def run_backtest(env, solver, options):
     """Runs a single full pass over the Test Data."""
@@ -180,23 +199,21 @@ def run_backtest(env, solver, options):
     agent_vals = []
     market_vals = []
     
-    # Pre-calculate market curve for plotting
     initial_cash = env.initial_cash
     start_prices = env.prices[0, :, 3]
     start_prices = np.where(start_prices == 0, 1e-9, start_prices)
-    shares = (initial_cash / 7.0) / start_prices
+    
+    # Dynamically calculate shares based on number of assets found
+    num_assets = len(start_prices)
+    shares = (initial_cash / float(num_assets)) / start_prices
     
     while not done:
-        # Greedy action (no noise)
         action = solver.select_action(state, training = False) 
-        
         state, reward, term, trunc, info = env.step(action)
         done = term or trunc
         
-        # Track Agent Value
         agent_vals.append(info['portfolio_value'])
         
-        # Track Market Value
         curr_prices = env.prices[env.t, :, 3]
         market_vals.append(np.sum(shares * curr_prices))
     
@@ -218,7 +235,6 @@ def run_backtest(env, solver, options):
         df_results.to_csv(data_path, index=False)
         print(f"Saved test results saved to {data_path}")
 
-    # Plot Test
     plt.figure(figsize=(10, 5))
     plt.plot(agent_vals, label="Agent Portfolio", color='blue')
     plt.plot(market_vals, label="Buy & Hold Portfolio", color='orange', linestyle='--')
@@ -239,7 +255,10 @@ def run_backtest(env, solver, options):
     print(f"Final Agent Return: {agent_ret:.2%}")
     print(f"Final Market Return: {mkt_ret:.2%}")
     
-    plt.show()
+    if not options.disable_plots:
+        plt.show()
+    else:
+        plt.clf()
 
 def build_parser():
     parser = optparse.OptionParser()
@@ -261,6 +280,10 @@ def build_parser():
     parser.add_option("-d", "--data_dir", dest="data_dir", default="data")
     parser.add_option("-A", "--action_space_mode", dest="action_space_mode", default="multidiscrete")
     
+    # [NEW] Ticker selection option
+    parser.add_option("-T", "--ticker", dest="ticker", default="all",
+                      help="Specific ticker to select (e.g., 'AAPL') or 'all' for default set.")
+
     parser.add_option("-m", "--replay", type="int", dest="replay_memory_size", default=100000)
     parser.add_option("-N", "--update", type="int", dest="update_target_estimator_every", default=1000)
     parser.add_option("-b", "--batch_size", type="int", dest="batch_size", default=64)
@@ -269,6 +292,7 @@ def build_parser():
     parser.add_option("--no-plots", action="store_true", dest="disable_plots", default=False)
     parser.add_option("--rand-start", action="store_true", dest="random_start", default=False)
     parser.add_option("--cont", action="store_true", dest="continous", default=False)
+    parser.add_option("--gpu", action="store_true", dest="gpu", default=False)
     return parser
 
 def parse_list(s):
@@ -306,12 +330,10 @@ def main(options):
         print(f"Episode {i+1}: Reward {rew:.4f}")
 
     # 4. Plot Training Stats (Return & Return Avg)
-    if not options.disable_plots:
-        plot_training_curve(stats, model=str(solver), outfile=options.outfile)
+    plot_training_curve(stats, model=str(solver), outfile=options.outfile)
 
     # 5. Backtest Phase
-    if not options.disable_plots:
-        run_backtest(test_env, solver, options)
+    run_backtest(test_env, solver, options)
         
     return {"stats": stats, "solver": solver}
 
