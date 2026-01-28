@@ -1,5 +1,17 @@
 # CSCE-642: Deep Reinforcement Learning
 
+## Project Description
+Our project aims to develop and evaluate a suite of deep reinforcement learning agents for
+automated stock trading. We will utilize the csce642-deepRL GitHub repository as a foundation,
+integrating data pipelines from providers like Yahoo Finance and Alpaca. The project will
+leverage the Gymnasium and RLlib libraries to implement, train, and compare several key RL
+algorithms. Our agent's state space is a comprehensive vector capturing its financial position
+and market conditions, supplemented by technical indicators like the Moving Average
+Convergence Divergence and the Relative Strength Index. The action space is discrete, defined
+as the set of integers \{−k, ..., −1, 0, 1, ..., k\}, where k represents the maximum number of shares
+to be transacted, and the positive sign indicates a buy action while the negative sign represents
+a sell action.
+
 ## Project Resources
 [Project Presentation](https://www.youtube.com/watch?v=DmmIUyizI_8)
 
