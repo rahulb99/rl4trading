@@ -1,4 +1,4 @@
-# CSCE-642: Deep Reinforcement Learning
+# Stock Trading using Reinforcement Learning
 
 ## Project Description
 Our project aims to develop and evaluate a suite of deep reinforcement learning agents for
