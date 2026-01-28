@@ -1,5 +1,10 @@
 # CSCE-642: Deep Reinforcement Learning
 
+## Project Resources
+[Project Report](https://open-box.readthedocs.io/en/latest/installation/install_swig.html](https://www.youtube.com/watch?v=DmmIUyizI_8).
+
+[Project Presentation](./CSCE_642_Final_Report.pdf).
+
 ## Setup
 SWIG is required for installing Box2D. It can be installed on Linux by running 
 ```bash
